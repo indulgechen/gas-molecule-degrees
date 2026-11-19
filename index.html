@@ -1,0 +1,3094 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>气体分子的自由度 · 3D 交互演示</title>
+<style>
+  :root{
+    --paper:#f1ecdf;
+    --paper-raised:#faf6eb;
+    --paper-deep:#e8e1d2;
+    --ink:#132b2f;
+    --ink-soft:#425b5d;
+    --muted:#6d7c7c;
+    --line:rgba(19,43,47,.15);
+    --line-strong:rgba(19,43,47,.29);
+    --teal:#0c6a60;
+    --teal-deep:#073d3a;
+    --teal-dark:#052a29;
+    --mint:#cfe6df;
+    --mint-bright:#8ee0d2;
+    --rust:#c25f3c;
+    --amber:#e3a35c;
+    --blue:#6e98d7;
+    --stage:#041719;
+    --stage-2:#0a2b2d;
+    --sans:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Noto Sans SC",Arial,sans-serif;
+    --serif:"Source Han Serif SC","Noto Serif SC","Songti SC","STSong","SimSun",Georgia,serif;
+    --math:"Cambria Math","Latin Modern Math",Cambria,Georgia,"Times New Roman",serif;
+    --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    min-width:320px;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 8% -12%, rgba(255,255,255,.96) 0, rgba(255,255,255,0) 38%),
+      radial-gradient(circle at 97% 4%, rgba(199,228,218,.55) 0, rgba(199,228,218,0) 31%),
+      var(--paper);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background-image:
+      linear-gradient(rgba(19,43,47,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(19,43,47,.035) 1px, transparent 1px);
+    background-size:54px 54px;
+    mask-image:radial-gradient(ellipse 90% 72% at 50% 8%, #000 18%, transparent 80%);
+    -webkit-mask-image:radial-gradient(ellipse 90% 72% at 50% 8%, #000 18%, transparent 80%);
+  }
+  ::selection{background:var(--mint);color:var(--ink);}
+  button,input{font:inherit;}
+  button{color:inherit;}
+  button:focus-visible,input:focus-visible,[tabindex]:focus-visible{
+    outline:2px solid var(--rust);
+    outline-offset:3px;
+  }
+  .sr-only{
+    position:absolute!important;
+    width:1px;height:1px;
+    padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0,0,0,0);
+    white-space:nowrap;border:0;
+  }
+  .shell{
+    position:relative;
+    z-index:1;
+    width:min(1480px,100%);
+    margin:0 auto;
+    padding:26px clamp(20px,3.4vw,50px) 34px;
+  }
+
+  /* ---------------- masthead ---------------- */
+  .masthead{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 286px;
+    gap:42px;
+    align-items:end;
+    padding:8px 0 26px;
+    border-top:1px solid var(--line-strong);
+  }
+  .mast-copy{padding-top:19px;}
+  .kicker{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:9px;
+    margin:0 0 16px;
+    color:var(--teal);
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+  }
+  .kicker::before{
+    content:"";
+    width:28px;
+    height:1px;
+    background:var(--teal);
+  }
+  .kicker .dot{
+    width:3px;height:3px;border-radius:50%;
+    background:var(--rust);
+    margin:0 1px;
+  }
+  h1{
+    margin:0;
+    max-width:900px;
+    font-family:var(--serif);
+    font-size:clamp(46px,5.7vw,82px);
+    font-weight:600;
+    line-height:1.03;
+    letter-spacing:-.055em;
+  }
+  h1 em{
+    color:var(--teal);
+    font-style:normal;
+    position:relative;
+    white-space:nowrap;
+  }
+  h1 em::after{
+    content:"";
+    position:absolute;
+    left:.02em;right:.03em;bottom:-.04em;
+    height:.045em;
+    background:linear-gradient(90deg,var(--rust),rgba(194,95,60,0));
+    border-radius:99px;
+  }
+  .dek{
+    max-width:735px;
+    margin:19px 0 0;
+    color:#526669;
+    font-size:16px;
+    line-height:1.9;
+  }
+  .dek b{color:var(--ink);font-weight:700;white-space:nowrap;}
+  .dek i{font-family:var(--math);font-size:1.1em;color:var(--teal);font-style:italic;}
+  .mast-side{
+    padding:0 0 4px 23px;
+    border-left:1px solid var(--line);
+  }
+  .lesson-no{
+    color:var(--rust);
+    font-family:var(--serif);
+    font-size:52px;
+    line-height:1;
+    letter-spacing:-.045em;
+  }
+  .lesson-name{
+    margin:9px 0 0;
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:.035em;
+  }
+  .lesson-topic{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.65;
+  }
+  .mast-eq{
+    margin-top:17px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+    font-family:var(--math);
+    font-size:23px;
+    line-height:1.2;
+  }
+  .mast-eq small{
+    display:block;
+    margin-top:5px;
+    color:var(--muted);
+    font-family:var(--sans);
+    font-size:10px;
+    letter-spacing:.09em;
+  }
+
+  /* ---------------- workbench ---------------- */
+  .workbench{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 360px;
+    gap:18px;
+    align-items:stretch;
+  }
+  .stage-card{
+    position:relative;
+    min-height:600px;
+    margin:0;
+    overflow:hidden;
+    isolation:isolate;
+    border:1px solid rgba(255,255,255,.075);
+    border-radius:22px;
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(36,121,111,.27) 0%, rgba(36,121,111,0) 57%),
+      linear-gradient(148deg, #0b2b2d 0%, #061d20 55%, #031214 100%);
+    box-shadow:
+      0 28px 64px -38px rgba(8,38,40,.7),
+      0 1px 0 rgba(255,255,255,.07) inset,
+      0 0 0 1px rgba(0,0,0,.1);
+  }
+  .stage-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background-image:
+      linear-gradient(rgba(164,222,210,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(164,222,210,.045) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(ellipse 80% 72% at 50% 45%, #000 20%, transparent 78%);
+    -webkit-mask-image:radial-gradient(ellipse 80% 72% at 50% 45%, #000 20%, transparent 78%);
+  }
+  .stage-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(2,11,12,.48) 0%, transparent 24%, transparent 70%, rgba(2,10,11,.62) 100%),
+      radial-gradient(ellipse at 50% 50%, transparent 46%, rgba(0,0,0,.25) 100%);
+  }
+  #scene{
+    position:absolute;
+    inset:0;
+    z-index:1;
+    display:block;
+    width:100%;
+    height:100%;
+    touch-action:none;
+    cursor:grab;
+  }
+  .stage-card.is-dragging #scene{cursor:grabbing;}
+  .corner{
+    position:absolute;
+    z-index:3;
+    width:17px;height:17px;
+    pointer-events:none;
+    opacity:.42;
+  }
+  .corner.tl{top:14px;left:14px;border-top:1px solid #a8d6cc;border-left:1px solid #a8d6cc;}
+  .corner.tr{top:14px;right:14px;border-top:1px solid #a8d6cc;border-right:1px solid #a8d6cc;}
+  .corner.bl{bottom:14px;left:14px;border-bottom:1px solid #a8d6cc;border-left:1px solid #a8d6cc;}
+  .corner.br{bottom:14px;right:14px;border-bottom:1px solid #a8d6cc;border-right:1px solid #a8d6cc;}
+
+  .scene-head{
+    position:absolute;
+    top:19px;left:21px;right:21px;
+    z-index:3;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+    pointer-events:none;
+  }
+  .scene-id{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-width:0;
+  }
+  .scene-index{
+    flex:0 0 auto;
+    color:rgba(207,230,223,.48);
+    font-family:var(--math);
+    font-size:31px;
+    line-height:1;
+    letter-spacing:-.04em;
+  }
+  .scene-name{
+    margin:0;
+    color:#f1e9da;
+    font-family:var(--serif);
+    font-size:20px;
+    font-weight:600;
+    line-height:1.3;
+    letter-spacing:.01em;
+  }
+  .scene-sub{
+    margin:4px 0 0;
+    color:rgba(201,226,219,.56);
+    font-family:var(--mono);
+    font-size:8.5px;
+    line-height:1.2;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+  .scene-badge{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:6px 10px;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:99px;
+    background:rgba(4,24,25,.46);
+    color:rgba(216,239,233,.7);
+    font-family:var(--mono);
+    font-size:8.5px;
+    letter-spacing:.12em;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .live-dot{
+    width:5px;height:5px;
+    border-radius:50%;
+    background:#76d8c5;
+    box-shadow:0 0 0 3px rgba(118,216,197,.12),0 0 10px rgba(118,216,197,.7);
+    animation:livePulse 2.4s ease-in-out infinite;
+  }
+  .stage-card.is-paused .live-dot{
+    background:var(--amber);
+    box-shadow:0 0 0 3px rgba(227,163,92,.12);
+    animation:none;
+  }
+  @keyframes livePulse{
+    0%,100%{opacity:1;transform:scale(1);}
+    50%{opacity:.55;transform:scale(.82);}
+  }
+  .scene-hint{
+    position:absolute;
+    top:69px;right:21px;
+    z-index:3;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    color:rgba(203,230,222,.52);
+    font-size:10px;
+    letter-spacing:.05em;
+    pointer-events:none;
+    transition:opacity .45s ease;
+  }
+  .scene-hint svg{width:14px;height:14px;opacity:.8;}
+  .scene-hint.is-gone{opacity:0;}
+  .scene-legend{
+    position:absolute;
+    left:21px;
+    bottom:80px;
+    z-index:3;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    color:rgba(212,235,229,.62);
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:.04em;
+    pointer-events:none;
+  }
+  .scene-legend span{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    transition:opacity .25s ease;
+  }
+  .scene-legend i{
+    width:5px;height:5px;border-radius:50%;
+    background:currentColor;
+    box-shadow:0 0 8px currentColor;
+  }
+  .scene-legend span.t{color:#e2a363;}
+  .scene-legend span.r{color:#82a9e3;}
+  .scene-legend span.s{color:#75d2bf;}
+  .scene-legend span.is-off{opacity:.24;}
+  .scene-legend b{font-weight:600;color:inherit;}
+
+  .scene-controls{
+    position:absolute;
+    left:16px;right:16px;bottom:14px;
+    z-index:4;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-height:50px;
+    padding:7px 9px;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:14px;
+    background:rgba(4,24,25,.72);
+    box-shadow:0 12px 30px -18px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.055) inset;
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+  }
+  .transport{
+    flex:0 0 auto;
+    display:grid;
+    place-items:center;
+    width:34px;height:34px;
+    padding:0;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:50%;
+    background:#e8dfcc;
+    color:#0a302e;
+    cursor:pointer;
+    transition:transform .2s ease,background .2s ease;
+  }
+  .transport:hover{transform:scale(1.06);background:#f5eddd;}
+  .transport:active{transform:scale(.97);}
+  .transport svg{width:14px;height:14px;display:block;}
+  .transport .icon-play{display:none;}
+  .transport .icon-pause{display:block;}
+  .stage-card.is-paused .transport .icon-play{display:block;}
+  .stage-card.is-paused .transport .icon-pause{display:none;}
+  .speed{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+    color:rgba(212,235,229,.54);
+    font-size:9px;
+    letter-spacing:.08em;
+    white-space:nowrap;
+  }
+  .speed b{
+    min-width:34px;
+    color:rgba(239,244,237,.83);
+    font-family:var(--mono);
+    font-size:9.5px;
+    font-weight:500;
+    letter-spacing:0;
+  }
+  input[type="range"]{
+    -webkit-appearance:none;
+    appearance:none;
+    width:92px;
+    height:3px;
+    margin:0;
+    border-radius:99px;
+    background:linear-gradient(90deg,#78d2c0 0%,#78d2c0 var(--fill,40%),rgba(255,255,255,.16) var(--fill,40%),rgba(255,255,255,.16) 100%);
+    cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    appearance:none;
+    width:11px;height:11px;
+    border:2px solid #062b29;
+    border-radius:50%;
+    background:#f2ead8;
+    box-shadow:0 0 0 1px rgba(255,255,255,.45);
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:9px;height:9px;
+    border:2px solid #062b29;
+    border-radius:50%;
+    background:#f2ead8;
+  }
+  .ctrl-divider{
+    flex:0 0 auto;
+    width:1px;height:20px;
+    background:rgba(255,255,255,.11);
+  }
+  .spacer{flex:1 1 auto;}
+  .mini-btn{
+    flex:0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 8px;
+    border:1px solid transparent;
+    border-radius:8px;
+    background:transparent;
+    color:rgba(216,237,231,.62);
+    font-size:9.5px;
+    letter-spacing:.05em;
+    cursor:pointer;
+    transition:color .18s ease,background .18s ease,border-color .18s ease;
+  }
+  .mini-btn:hover{
+    color:#eef5f0;
+    background:rgba(255,255,255,.06);
+    border-color:rgba(255,255,255,.07);
+  }
+  .mini-btn[aria-pressed="false"]{opacity:.48;}
+  .mini-btn svg{width:13px;height:13px;flex:0 0 auto;}
+
+  /* ---------------- side panel ---------------- */
+  .panel{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    min-width:0;
+  }
+  .panel > *{flex:0 0 auto;}
+  .panel-card{
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:rgba(250,246,235,.83);
+    box-shadow:0 16px 36px -30px rgba(23,55,54,.38);
+  }
+  .selector-card{padding:15px 14px 13px;}
+  .block-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .block-head > span{
+    color:var(--ink);
+    font-family:var(--serif);
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:.02em;
+  }
+  .block-head small{
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:8px;
+    letter-spacing:.13em;
+  }
+  .mol-option{
+    display:grid;
+    grid-template-columns:40px minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    width:100%;
+    padding:8px 9px;
+    border:1px solid transparent;
+    border-radius:12px;
+    background:transparent;
+    text-align:left;
+    cursor:pointer;
+    transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease;
+  }
+  .mol-option + .mol-option{margin-top:3px;}
+  .mol-option:hover{
+    background:rgba(12,106,96,.055);
+    border-color:rgba(12,106,96,.12);
+  }
+  .mol-option[aria-pressed="true"]{
+    color:#f5eee0;
+    border-color:rgba(255,255,255,.07);
+    background:linear-gradient(135deg,#0e4240 0%,#082d2c 75%);
+    box-shadow:0 12px 25px -19px rgba(6,45,43,.92),0 1px 0 rgba(255,255,255,.06) inset;
+  }
+  .mol-icon{
+    display:grid;
+    place-items:center;
+    width:40px;height:31px;
+    color:var(--teal);
+    transition:color .2s ease;
+  }
+  .mol-icon svg{width:40px;height:29px;display:block;overflow:visible;}
+  .mol-option[aria-pressed="true"] .mol-icon{color:#8fe4d5;}
+  .mol-copy{min-width:0;}
+  .mol-copy b{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    line-height:1.42;
+    white-space:nowrap;
+  }
+  .mol-copy small{
+    display:block;
+    margin-top:1px;
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:7.5px;
+    line-height:1.25;
+    letter-spacing:.09em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .mol-option[aria-pressed="true"] .mol-copy small{color:rgba(197,228,220,.5);}
+  .mol-count{
+    display:flex;
+    align-items:baseline;
+    gap:2px;
+    min-width:30px;
+    justify-content:flex-end;
+    color:var(--ink);
+  }
+  .mol-count b{
+    font-family:var(--math);
+    font-size:18px;
+    font-weight:400;
+    line-height:1;
+    letter-spacing:-.03em;
+  }
+  .mol-count small{
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:7.5px;
+    font-style:italic;
+  }
+  .mol-option[aria-pressed="true"] .mol-count{color:#f1e6d4;}
+  .mol-option[aria-pressed="true"] .mol-count small{color:rgba(210,236,229,.48);}
+
+  .dof-board{
+    position:relative;
+    overflow:hidden;
+    padding:17px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    color:#edf5ef;
+    background:
+      radial-gradient(circle at 102% -4%, rgba(81,181,164,.3) 0%, rgba(81,181,164,0) 43%),
+      linear-gradient(145deg,#0d3938 0%,#062525 56%,#04191b 100%);
+    box-shadow:0 22px 44px -30px rgba(7,43,42,.8),0 1px 0 rgba(255,255,255,.08) inset;
+  }
+  .dof-board::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background-image:
+      linear-gradient(rgba(214,241,234,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(214,241,234,.045) 1px, transparent 1px);
+    background-size:26px 26px;
+    mask-image:linear-gradient(140deg,#000,transparent 66%);
+    -webkit-mask-image:linear-gradient(140deg,#000,transparent 66%);
+  }
+  .dof-board > *{position:relative;z-index:1;}
+  .board-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .board-head span{
+    color:rgba(224,242,236,.76);
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.1em;
+  }
+  .board-head small{
+    color:rgba(173,215,205,.5);
+    font-family:var(--math);
+    font-size:12px;
+    letter-spacing:.01em;
+  }
+  .total-row{
+    display:flex;
+    align-items:flex-end;
+    gap:12px;
+    margin-top:5px;
+  }
+  .total-number{
+    display:flex;
+    align-items:flex-start;
+    gap:2px;
+    line-height:1;
+  }
+  .total-number span{
+    margin-top:8px;
+    color:rgba(200,231,223,.52);
+    font-family:var(--math);
+    font-size:17px;
+    font-style:italic;
+  }
+  .total-number strong{
+    color:#f6eddb;
+    font-family:var(--math);
+    font-size:78px;
+    font-weight:400;
+    line-height:.9;
+    letter-spacing:-.055em;
+    font-variant-numeric:tabular-nums;
+  }
+  .total-number strong.pop{animation:numberPop .38s cubic-bezier(.2,.9,.3,1.35);}
+  @keyframes numberPop{
+    0%{opacity:.35;transform:translateY(5px) scale(.92);}
+    100%{opacity:1;transform:none;}
+  }
+  .total-caption{
+    padding-bottom:10px;
+    color:rgba(215,235,229,.72);
+    font-size:10px;
+    line-height:1.4;
+    letter-spacing:.06em;
+  }
+  .total-caption small{
+    display:block;
+    margin-top:3px;
+    color:rgba(164,200,191,.45);
+    font-family:var(--mono);
+    font-size:7px;
+    letter-spacing:.13em;
+  }
+  .board-energy{
+    margin-left:auto;
+    padding-bottom:11px;
+    text-align:right;
+    color:rgba(170,207,198,.62);
+    font-size:9px;
+    line-height:1.4;
+    white-space:nowrap;
+  }
+  .board-energy b{
+    display:block;
+    color:#9de4d3;
+    font-family:var(--math);
+    font-size:17px;
+    font-weight:400;
+    letter-spacing:.01em;
+  }
+  .counts{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+    margin-top:13px;
+  }
+  .count-card{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    min-width:0;
+    padding:8px 9px 7px;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:10px;
+    background:rgba(255,255,255,.045);
+    color:#edf4ef;
+    text-align:left;
+    cursor:pointer;
+    overflow:hidden;
+    transition:background .2s ease,border-color .2s ease,opacity .2s ease,transform .2s ease;
+  }
+  .count-card::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;
+    height:2px;
+    background:currentColor;
+    opacity:.75;
+  }
+  .count-card:hover{
+    background:rgba(255,255,255,.075);
+    border-color:rgba(255,255,255,.17);
+    transform:translateY(-1px);
+  }
+  .count-card.t{color:#e3a35c;}
+  .count-card.r{color:#82a9e3;}
+  .count-card.s{color:#75d2bf;}
+  .count-card[aria-pressed="false"]{opacity:.38;}
+  .count-card:disabled{opacity:.32;cursor:not-allowed;transform:none;}
+  .count-card b{
+    color:#f5edde;
+    font-family:var(--math);
+    font-size:23px;
+    font-weight:400;
+    line-height:1.12;
+    letter-spacing:-.03em;
+  }
+  .count-card small{
+    color:rgba(211,234,228,.54);
+    font-size:8px;
+    line-height:1.25;
+    letter-spacing:.08em;
+  }
+  .count-symbol{
+    position:absolute;
+    top:7px;right:8px;
+    color:currentColor;
+    font-family:var(--math);
+    font-size:13px;
+    font-style:italic;
+    line-height:1;
+    opacity:.9;
+  }
+  .stack-bar{
+    display:flex;
+    gap:2px;
+    height:5px;
+    margin-top:12px;
+    padding:0;
+    border-radius:99px;
+    background:
+      repeating-linear-gradient(90deg,rgba(255,255,255,.13) 0,rgba(255,255,255,.13) 1px,transparent 1px,transparent calc(100% / 7)) ,
+      rgba(255,255,255,.055);
+    overflow:hidden;
+  }
+  .stack-bar span{
+    display:block;
+    height:100%;
+    border-radius:2px;
+    transition:width .38s cubic-bezier(.2,.8,.2,1),opacity .25s ease;
+  }
+  .stack-bar .st{background:#e3a35c;}
+  .stack-bar .sr{background:#82a9e3;}
+  .stack-bar .ss{background:#75d2bf;}
+  .stack-bar span.off{opacity:.18;}
+  .board-tip{
+    margin:8px 0 0;
+    color:rgba(172,205,197,.46);
+    font-size:9.2px;
+    line-height:1.5;
+    letter-spacing:.03em;
+  }
+  .desc-card{padding:14px 15px 13px;}
+  .desc-card .block-head{margin-bottom:6px;}
+  .desc-card p{
+    margin:0;
+    color:#586b6d;
+    font-size:12.5px;
+    line-height:1.8;
+  }
+
+  /* ---------------- parameter panel ---------------- */
+  .params-card{
+    margin-top:18px;
+    padding:18px 20px 16px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(12,106,96,.055) 0%, rgba(12,106,96,0) 32%),
+      rgba(250,246,235,.86);
+    box-shadow:0 22px 48px -38px rgba(23,55,54,.42);
+    transition:border-color .25s ease,box-shadow .25s ease;
+  }
+  .params-card.is-manual{
+    border-color:rgba(194,95,60,.32);
+    box-shadow:0 24px 50px -38px rgba(93,42,27,.4);
+  }
+  .params-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:24px;
+  }
+  .params-title{min-width:0;}
+  .params-eyebrow{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin:0 0 4px;
+    color:var(--rust);
+    font-family:var(--mono);
+    font-size:8px;
+    font-weight:600;
+    letter-spacing:.15em;
+  }
+  .params-eyebrow::before{
+    content:"";
+    width:18px;height:1px;
+    background:var(--rust);
+  }
+  .params-title h2{
+    margin:0;
+    font-family:var(--serif);
+    font-size:19px;
+    font-weight:600;
+    line-height:1.4;
+    letter-spacing:.01em;
+  }
+  .params-title p{
+    margin:3px 0 0;
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.6;
+  }
+  .params-actions{
+    flex:0 0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:6px;
+  }
+  .mode-switch{
+    display:inline-flex;
+    gap:2px;
+    padding:3px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--paper-deep);
+  }
+  .mode-switch button{
+    padding:6px 11px;
+    border:0;
+    border-radius:7px;
+    background:transparent;
+    color:var(--muted);
+    font-size:10.5px;
+    line-height:1.4;
+    letter-spacing:.03em;
+    cursor:pointer;
+    transition:background .2s ease,color .2s ease,box-shadow .2s ease;
+  }
+  .mode-switch button:hover{color:var(--ink);}
+  .mode-switch button[aria-pressed="true"]{
+    color:#f7f0e1;
+    background:var(--teal);
+    box-shadow:0 5px 12px -8px rgba(7,61,58,.65);
+  }
+  .param-hint{
+    color:var(--muted);
+    font-size:9px;
+    letter-spacing:.03em;
+    transition:color .2s ease;
+  }
+  .params-card.is-manual .param-hint{color:var(--rust);}
+  .size-row{
+    display:grid;
+    grid-template-columns:auto minmax(120px,1fr) 42px auto;
+    gap:11px;
+    align-items:center;
+    margin-top:12px;
+    padding:9px 11px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:rgba(232,225,210,.3);
+  }
+  .size-label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:var(--ink-soft);
+    font-size:10px;
+    font-weight:600;
+    line-height:1.4;
+    white-space:nowrap;
+  }
+  .size-label::before{
+    content:"";
+    width:5px;height:5px;
+    border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 0 3px rgba(227,163,92,.13);
+  }
+  .size-row input[type="range"]{
+    width:100%;
+    max-width:none;
+    height:4px;
+    margin:0;
+    background:linear-gradient(90deg,#b98934 0%,#b98934 var(--fill,37.5%),rgba(19,43,47,.14) var(--fill,37.5%),rgba(19,43,47,.14) 100%);
+    cursor:pointer;
+  }
+  .size-row input[type="range"]::-webkit-slider-thumb{
+    width:13px;height:13px;
+    border:2px solid var(--paper-raised);
+    background:#b98934;
+    box-shadow:0 0 0 1px #b98934,0 2px 4px rgba(14,39,38,.16);
+  }
+  .size-row input[type="range"]::-moz-range-thumb{
+    width:10px;height:10px;
+    border:2px solid var(--paper-raised);
+    background:#b98934;
+    box-shadow:0 0 0 1px #b98934;
+  }
+  .size-row output{
+    color:var(--ink-soft);
+    font-family:var(--mono);
+    font-size:9.5px;
+    line-height:1;
+    text-align:right;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .size-note{
+    color:var(--muted);
+    font-size:8.5px;
+    line-height:1.4;
+    white-space:nowrap;
+  }
+  .param-grid{
+    display:grid;
+    grid-template-columns:1.02fr 1.16fr .86fr;
+    margin-top:14px;
+    border-top:1px solid var(--line);
+  }
+  .param-group{
+    --accent:var(--teal);
+    min-width:0;
+    padding:13px 18px 1px;
+  }
+  .param-group.t{--accent:var(--rust);}
+  .param-group.r{--accent:#4f7dbb;}
+  .param-group.s{--accent:var(--teal);}
+  .param-group:first-child{padding-left:2px;}
+  .param-group:last-child{padding-right:2px;}
+  .param-group + .param-group{border-left:1px solid var(--line);}
+  .param-group-head{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    min-width:0;
+  }
+  .param-group-head .dot{
+    flex:0 0 auto;
+    width:6px;height:6px;
+    border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent);
+  }
+  .param-group-head b{
+    overflow:hidden;
+    color:var(--ink);
+    font-size:12.5px;
+    font-weight:600;
+    line-height:1.45;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .param-group-head em{
+    flex:0 0 auto;
+    margin-left:auto;
+    color:var(--accent);
+    font-family:var(--math);
+    font-size:11px;
+    font-style:italic;
+    white-space:nowrap;
+  }
+  .param-sub{
+    margin:2px 0 7px;
+    color:var(--muted);
+    font-size:9.5px;
+    line-height:1.45;
+  }
+  .origin-btn{
+    flex:0 0 auto;
+    margin-left:1px;
+    padding:2px 6px;
+    border:1px solid rgba(194,95,60,.27);
+    border-radius:5px;
+    background:rgba(194,95,60,.065);
+    color:var(--rust);
+    font-size:8px;
+    line-height:1.4;
+    letter-spacing:.03em;
+    cursor:pointer;
+    transition:background .18s ease,border-color .18s ease;
+  }
+  .origin-btn:hover{
+    background:rgba(194,95,60,.14);
+    border-color:rgba(194,95,60,.42);
+  }
+  .param-row{
+    display:grid;
+    grid-template-columns:25px minmax(50px,1fr) 48px;
+    gap:8px;
+    align-items:center;
+    margin:6px 0;
+    min-width:0;
+    cursor:pointer;
+    transition:opacity .2s ease;
+  }
+  .param-row.is-unavailable{
+    opacity:.28;
+    cursor:not-allowed;
+  }
+  .param-sym{
+    color:var(--accent);
+    font-family:var(--math);
+    font-size:14.5px;
+    font-style:italic;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .param-row input[type="range"]{
+    width:100%;
+    max-width:none;
+    height:3px;
+    margin:0;
+    border-radius:99px;
+    background:linear-gradient(90deg,var(--accent) 0%,var(--accent) var(--fill,50%),rgba(19,43,47,.14) var(--fill,50%),rgba(19,43,47,.14) 100%);
+    cursor:pointer;
+  }
+  .param-row input[type="range"]::-webkit-slider-thumb{
+    width:14px;height:14px;
+    border:2px solid var(--paper-raised);
+    background:var(--accent);
+    box-shadow:0 0 0 1px var(--accent),0 2px 4px rgba(14,39,38,.18);
+  }
+  .param-row input[type="range"]::-moz-range-thumb{
+    width:11px;height:11px;
+    border:2px solid var(--paper-raised);
+    background:var(--accent);
+    box-shadow:0 0 0 1px var(--accent);
+  }
+  .param-row input[type="range"]:disabled{cursor:not-allowed;}
+  .param-row.is-unavailable input[type="range"]{filter:grayscale(1);}
+  .param-row.is-unavailable .param-sym,
+  .param-row.is-unavailable output{color:var(--muted);}
+  .param-row output{
+    color:var(--ink-soft);
+    font-family:var(--mono);
+    font-size:10px;
+    line-height:1;
+    text-align:right;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .param-note{
+    min-height:27px;
+    margin:8px 0 0;
+    padding-top:7px;
+    border-top:1px dashed var(--line);
+    color:var(--muted);
+    font-size:9px;
+    line-height:1.6;
+  }
+  .param-note b{color:var(--ink-soft);font-weight:600;}
+
+  /* ---------------- table + theory ---------------- */
+  .lower{
+    display:grid;
+    grid-template-columns:minmax(0,1.45fr) minmax(330px,.72fr);
+    gap:18px;
+    margin-top:18px;
+    align-items:stretch;
+  }
+  .data-card,.theory-card{
+    border:1px solid var(--line);
+    border-radius:20px;
+    box-shadow:0 22px 48px -38px rgba(23,55,54,.45);
+  }
+  .data-card{
+    min-width:0;
+    padding:20px 22px 15px;
+    background:rgba(250,246,235,.86);
+  }
+  .section-head{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:10px;
+  }
+  .section-title{
+    display:flex;
+    align-items:baseline;
+    gap:11px;
+  }
+  .section-title h2{
+    margin:0;
+    font-family:var(--serif);
+    font-size:19px;
+    font-weight:600;
+    letter-spacing:.01em;
+  }
+  .section-title span{
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:8px;
+    letter-spacing:.13em;
+  }
+  .section-note{
+    color:var(--muted);
+    font-size:10px;
+    letter-spacing:.03em;
+    white-space:nowrap;
+  }
+  .table-scroll{overflow-x:auto;scrollbar-width:thin;}
+  .dof-table{
+    width:100%;
+    min-width:590px;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
+  .dof-table th{
+    padding:8px 10px 9px;
+    border-bottom:1px solid var(--line-strong);
+    color:var(--muted);
+    font-size:10.5px;
+    font-weight:500;
+    line-height:1.35;
+    text-align:left;
+    vertical-align:bottom;
+  }
+  .dof-table th:first-child{width:28%;}
+  .dof-table th:not(:first-child){text-align:center;}
+  .dof-table th .th-sym{
+    display:block;
+    margin-top:2px;
+    color:var(--ink-soft);
+    font-family:var(--math);
+    font-size:12px;
+    font-style:italic;
+    letter-spacing:.02em;
+  }
+  .dof-table th:last-child .th-sym{font-style:normal;}
+  .dof-table td{
+    padding:11px 10px;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+    vertical-align:middle;
+  }
+  .dof-table td:not(:first-child){text-align:center;}
+  .dof-table tbody tr{
+    cursor:pointer;
+    transition:background .2s ease,box-shadow .2s ease;
+  }
+  .dof-table tbody tr:hover{background:rgba(12,106,96,.045);}
+  .dof-table tbody tr.is-active{background:rgba(12,106,96,.075);}
+  .dof-table tbody tr.is-active td:first-child{box-shadow:inset 3px 0 0 var(--teal);}
+  .dof-table tbody tr:last-child td{border-bottom:0;}
+  .mol-cell b{
+    display:block;
+    font-size:14px;
+    font-weight:600;
+    line-height:1.35;
+  }
+  .mol-cell small{
+    display:block;
+    margin-top:2px;
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:8px;
+    letter-spacing:.09em;
+    line-height:1.2;
+  }
+  .num{
+    color:var(--ink);
+    font-family:var(--math);
+    font-size:22px;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .num.t{color:var(--rust);}
+  .num.r{color:#4f7dbb;}
+  .num.s{color:var(--teal);}
+  .num.zero{color:#a5afad;}
+  .total-badge{
+    display:inline-grid;
+    place-items:center;
+    min-width:34px;
+    height:29px;
+    padding:0 8px;
+    border:1px solid rgba(19,43,47,.18);
+    border-radius:99px;
+    background:rgba(19,43,47,.055);
+    color:var(--ink);
+    font-family:var(--math);
+    font-size:18px;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .is-active .total-badge{
+    border-color:rgba(12,106,96,.28);
+    background:var(--teal);
+    color:#f8f1e4;
+  }
+  .data-foot{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    margin-top:10px;
+    padding-top:9px;
+    border-top:1px dashed var(--line);
+    color:var(--muted);
+    font-size:10px;
+    line-height:1.55;
+  }
+  .data-foot b{color:var(--ink-soft);font-weight:600;}
+
+  .theory-card{
+    position:relative;
+    overflow:hidden;
+    padding:21px 22px 19px;
+    color:#edf4ee;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(227,163,92,.22) 0%, rgba(227,163,92,0) 38%),
+      linear-gradient(145deg,#0a3936 0%,#052625 58%,#041c1d 100%);
+    box-shadow:0 25px 52px -38px rgba(7,47,44,.78),0 1px 0 rgba(255,255,255,.07) inset;
+  }
+  .theory-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background-image:
+      linear-gradient(rgba(210,239,231,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(210,239,231,.04) 1px,transparent 1px);
+    background-size:30px 30px;
+    mask-image:linear-gradient(150deg,#000,transparent 72%);
+    -webkit-mask-image:linear-gradient(150deg,#000,transparent 72%);
+  }
+  .theory-card > *{position:relative;z-index:1;}
+  .theory-card .block-head > span{color:#f3ead9;}
+  .theory-card .block-head small{color:rgba(174,213,204,.46);}
+  .eq-main{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:9px;
+    color:#f6eddb;
+    font-family:var(--math);
+    font-size:44px;
+    line-height:1;
+    letter-spacing:-.015em;
+  }
+  .eq-main .eps{color:#9be2d1;font-style:italic;}
+  .eq-main .frac{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-self:center;
+    transform:translateY(-.28em);
+    min-width:1.1em;
+    margin:0 1px;
+    color:#f4c78e;
+    font-size:.55em;
+    line-height:1.02;
+    text-align:center;
+  }
+  .eq-main .frac b{
+    min-width:1.1em;
+    font-weight:400;
+    line-height:1.05;
+    padding:0 .12em;
+    border-bottom:0;
+  }
+  .eq-main .frac b:first-child{
+    padding-bottom:.04em;
+    border-bottom:1px solid rgba(244,199,142,.55);
+  }
+  .theory-lead{
+    margin:13px 0 0;
+    color:rgba(214,235,229,.72);
+    font-size:12.2px;
+    line-height:1.85;
+  }
+  .theory-lead b{color:#f2dfc3;font-weight:600;}
+  .eq-sub{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:5px 8px;
+    margin-top:13px;
+    padding-top:12px;
+    border-top:1px solid rgba(255,255,255,.1);
+    color:#f1e5d2;
+    font-family:var(--math);
+    font-size:25px;
+    line-height:1.1;
+  }
+  .eq-sub-math{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    min-width:0;
+  }
+  .eq-sub .frac{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-self:center;
+    min-width:1em;
+    margin:0 1px;
+    color:#f1e5d2;
+    font-size:.55em;
+    line-height:1.02;
+    text-align:center;
+  }
+  .eq-sub .frac b{
+    min-width:1em;
+    font-weight:400;
+    line-height:1.05;
+    padding:0 .12em;
+    border-bottom:0;
+  }
+  .eq-sub .frac b:first-child{
+    padding-bottom:.04em;
+    border-bottom:1px solid rgba(241,229,210,.48);
+  }
+  .eq-sub small{
+    margin-left:5px;
+    color:rgba(198,224,216,.46);
+    font-family:var(--sans);
+    font-size:9px;
+    letter-spacing:.04em;
+  }
+  .theory-example{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:14px;
+    padding:8px 10px;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:9px;
+    background:rgba(255,255,255,.045);
+    color:rgba(205,231,224,.68);
+    font-size:9.5px;
+    line-height:1.5;
+  }
+  .theory-example b{
+    color:#9be2d1;
+    font-family:var(--math);
+    font-size:13px;
+    font-weight:400;
+    white-space:nowrap;
+  }
+  .theory-note{
+    margin:12px 0 0;
+    color:rgba(183,214,205,.52);
+    font-size:9.8px;
+    line-height:1.75;
+  }
+  .theory-note b{color:rgba(231,191,144,.8);font-weight:500;}
+
+  .footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:22px;
+    margin-top:20px;
+    padding-top:12px;
+    border-top:1px solid var(--line);
+    color:var(--muted);
+    font-size:9.5px;
+    letter-spacing:.03em;
+  }
+  .footer b{color:var(--ink-soft);font-weight:600;}
+  .footer .keys{
+    display:flex;
+    gap:7px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .key{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+  }
+  kbd{
+    display:inline-grid;
+    place-items:center;
+    min-width:17px;
+    height:17px;
+    padding:0 4px;
+    border:1px solid var(--line);
+    border-bottom-color:var(--line-strong);
+    border-radius:4px;
+    background:rgba(255,255,255,.36);
+    color:var(--ink-soft);
+    font-family:var(--mono);
+    font-size:8px;
+    line-height:1;
+  }
+
+  /* ---------------- responsive ---------------- */
+  @media (max-width:1180px){
+    .workbench{grid-template-columns:minmax(0,1fr) 336px;}
+    .lower{grid-template-columns:minmax(0,1.3fr) minmax(320px,.72fr);}
+    .masthead{grid-template-columns:minmax(0,1fr) 252px;gap:30px;}
+    .scene-legend{gap:10px;}
+    .mini-btn span{display:none;}
+    .mini-btn{padding:7px;}
+  }
+  @media (max-width:1020px){
+    .workbench{grid-template-columns:1fr;}
+    .stage-card{min-height:570px;}
+    .panel{
+      display:grid;
+      grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+      align-items:start;
+    }
+    .desc-card{grid-column:1 / -1;}
+    .lower{grid-template-columns:1fr;}
+    .theory-card{min-height:0;}
+    .theory-card .eq-main{font-size:48px;}
+    .masthead{grid-template-columns:minmax(0,1fr) 250px;}
+    .scene-legend{gap:14px;}
+    .mini-btn span{display:inline;}
+  }
+  @media (max-width:760px){
+    .shell{padding:18px 18px 28px;}
+    .masthead{grid-template-columns:1fr;gap:22px;padding-bottom:22px;}
+    .mast-copy{padding-top:15px;}
+    h1{font-size:clamp(42px,10vw,60px);}
+    .dek{font-size:14px;margin-top:15px;}
+    .mast-side{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      align-items:center;
+      gap:0 16px;
+      padding:14px 0 0;
+      border-left:0;
+      border-top:1px solid var(--line);
+    }
+    .lesson-no{grid-row:1 / span 3;font-size:44px;}
+    .lesson-name{margin:0;}
+    .lesson-topic{margin:2px 0 0;}
+    .mast-eq{display:none;}
+    .workbench{gap:12px;}
+    .stage-card{min-height:0;height:480px;border-radius:18px;}
+    .params-card{border-radius:16px;padding:16px;}
+    .params-head{flex-direction:column;gap:11px;}
+    .params-actions{width:100%;flex-direction:row;align-items:center;justify-content:space-between;}
+    .param-grid{grid-template-columns:1fr;}
+    .param-group{padding:13px 0 1px;}
+    .param-group:first-child{padding-left:0;}
+    .param-group:last-child{padding-right:0;}
+    .param-group + .param-group{border-left:0;border-top:1px solid var(--line);}
+    .param-note{min-height:0;}
+    .size-row{grid-template-columns:auto minmax(0,1fr) 42px;gap:8px;}
+    .size-note{display:none;}
+    .panel{grid-template-columns:1fr;gap:10px;}
+    .desc-card{grid-column:auto;}
+    .scene-head{top:16px;left:17px;right:17px;}
+    .scene-name{font-size:18px;}
+    .scene-index{font-size:26px;}
+    .scene-hint{display:none;}
+    .scene-legend{left:18px;bottom:76px;font-size:8px;gap:11px;}
+    .scene-controls{left:11px;right:11px;bottom:11px;gap:8px;}
+    .speed{gap:7px;}
+    input[type="range"]{width:74px;}
+    .mini-btn span{display:none;}
+    .mini-btn{padding:7px;}
+    .ctrl-divider{display:none;}
+    .corner{display:none;}
+    .lower{gap:12px;margin-top:12px;}
+    .data-card{padding:17px 16px 13px;border-radius:16px;}
+    .section-head{align-items:flex-start;flex-direction:column;gap:5px;}
+    .section-note{white-space:normal;line-height:1.5;}
+    .dof-table{min-width:0;}
+    .dof-table th{padding:7px 5px 8px;font-size:9.5px;}
+    .dof-table th .th-sym{font-size:10px;}
+    .dof-table th:first-child .th-sym{display:none;}
+    .dof-table td{padding:9px 5px;}
+    .mol-cell b{font-size:13px;}
+    .mol-cell small{display:none;}
+    .num{font-size:18px;}
+    .total-badge{min-width:30px;height:26px;padding:0 4px;font-size:16px;}
+    .data-foot{flex-direction:column;gap:4px;}
+    .theory-card{border-radius:16px;padding:18px;}
+    .footer{flex-direction:column;align-items:flex-start;gap:8px;}
+    .footer .keys{justify-content:flex-start;}
+  }
+  @media (max-width:560px){
+    .shell{padding:14px 13px 24px;}
+    h1{font-size:clamp(38px,11vw,50px);letter-spacing:-.06em;}
+    .kicker{font-size:9.5px;gap:7px;letter-spacing:.1em;}
+    .kicker::before{width:18px;}
+    .dek{font-size:13px;line-height:1.8;}
+    .stage-card{height:430px;}
+    .scene-badge{display:none;}
+    .scene-head{top:14px;left:15px;right:15px;}
+    .scene-sub{font-size:7.5px;letter-spacing:.1em;}
+    .scene-legend{bottom:72px;left:15px;gap:9px;}
+    .scene-controls{min-height:46px;padding:6px;border-radius:12px;gap:6px;}
+    .transport{width:30px;height:30px;}
+    .speed b{min-width:28px;font-size:8.5px;}
+    .speed span{display:none;}
+    input[type="range"]{width:62px;}
+    .mini-btn{display:inline-flex;}
+    .spacer{display:none;}
+    .speed{flex:1;}
+    input[type="range"]{width:100%;max-width:90px;}
+    .dof-board{padding:15px;}
+    .total-number strong{font-size:68px;}
+    .board-energy b{font-size:15px;}
+    .selector-card{padding:13px 11px 11px;}
+    .section-title h2{font-size:17px;}
+    .eq-main{font-size:40px;}
+    .eq-sub{font-size:22px;}
+    .data-card{border-radius:14px;}
+    .params-card{padding:14px 13px;border-radius:14px;}
+    .params-title h2{font-size:17px;}
+    .params-title p{font-size:9.5px;}
+    .size-row{padding:8px 9px;gap:7px;}
+    .size-label{font-size:9.5px;}
+    .dof-table th{padding:6px 4px 7px;font-size:8.8px;}
+    .dof-table td{padding:8px 4px;}
+    .mol-cell b{font-size:12.5px;}
+    .num{font-size:17px;}
+    .param-row{grid-template-columns:22px minmax(40px,1fr) 43px;}
+    .param-row output{font-size:9px;}
+    .theory-example{flex-direction:column;align-items:flex-start;gap:2px;}
+    .footer{font-size:8.5px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *,*::before,*::after{
+      animation-duration:.001ms!important;
+      animation-iteration-count:1!important;
+      transition-duration:.001ms!important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="masthead">
+    <div class="mast-copy">
+      <div class="kicker">
+        <span>大学物理</span><span class="dot"></span>
+        <span>第十二章 · 气体动理论</span><span class="dot"></span>
+        <span>3D Interactive</span>
+      </div>
+      <h1>气体分子的<em>自由度</em></h1>
+      <p class="dek">
+        平动、转动、振动——每一种独立的运动方式，都是一个自由度。拖动 3D 分子，或在下方直接调节<b>坐标、转角与键长</b>，观察 <i>t</i>、<i>r</i>、<i>s</i> 如何共同决定 <b>i = t + r + s</b>。
+      </p>
+    </div>
+    <aside class="mast-side" aria-label="课程信息">
+      <div class="lesson-no">12.5</div>
+      <p class="lesson-name">能量均分定理</p>
+      <p class="lesson-topic">理想气体的内能 · 自由度模型</p>
+      <div class="mast-eq">
+        ε̄ = <span style="font-style:italic">i</span> / 2 · kT
+        <small>EACH DEGREE OF FREEDOM · ½kT</small>
+      </div>
+    </aside>
+  </header>
+
+  <main>
+    <section class="workbench" aria-label="气体分子自由度三维交互演示">
+      <figure class="stage-card" id="stageCard">
+        <canvas id="scene" tabindex="0" role="img" aria-label="可拖动旋转的三维气体分子模型，展示平动、转动与振动自由度"></canvas>
+        <span class="corner tl" aria-hidden="true"></span>
+        <span class="corner tr" aria-hidden="true"></span>
+        <span class="corner bl" aria-hidden="true"></span>
+        <span class="corner br" aria-hidden="true"></span>
+
+        <div class="scene-head">
+          <div class="scene-id">
+            <span class="scene-index" id="sceneIndex">01</span>
+            <div>
+              <h2 class="scene-name" id="sceneName">单原子分子</h2>
+              <p class="scene-sub" id="sceneSub">He · MONATOMIC</p>
+            </div>
+          </div>
+          <div class="scene-badge"><span class="live-dot"></span><span id="sceneMode">AUTO · 3D</span></div>
+        </div>
+
+        <div class="scene-hint" id="sceneHint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M8 11V7a1.5 1.5 0 0 1 3 0v4M11 11V5.5a1.5 1.5 0 0 1 3 0V11M14 11V7a1.5 1.5 0 0 1 3 0v5M17 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.2a6 6 0 0 1-4.6-2.2L5 14.5a1.6 1.6 0 0 1 2.5-2l1.5 1.7"/>
+          </svg>
+          拖动旋转 · 滚轮缩放
+        </div>
+
+        <div class="scene-legend" aria-hidden="true">
+          <span class="t" data-legend="t"><i></i>t <b>3</b></span>
+          <span class="r" data-legend="r"><i></i>r <b>0</b></span>
+          <span class="s" data-legend="s"><i></i>s <b>0</b></span>
+        </div>
+
+        <div class="scene-controls" aria-label="动画控制">
+          <button class="transport" id="playBtn" type="button" aria-label="暂停动画">
+            <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6L19 12z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1"/><rect x="13.4" y="5" width="3.6" height="14" rx="1"/></svg>
+          </button>
+          <div class="speed">
+            <span>演示速度</span>
+            <input id="speedRange" type="range" min="0.4" max="1.8" step="0.1" value="1" aria-label="演示速度">
+            <b id="speedValue">1.0×</b>
+          </div>
+          <span class="ctrl-divider" aria-hidden="true"></span>
+          <span class="spacer"></span>
+          <button class="mini-btn" id="resetViewBtn" type="button" title="重置视角" aria-label="重置视角">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4.8 9.2A8 8 0 1 1 4 14"/><path d="M4.5 4.8v4.7h4.7"/></svg>
+            <span>重置视角</span>
+          </button>
+          <button class="mini-btn" id="guideBtn" type="button" aria-pressed="true" title="显示或隐藏自由度标注" aria-label="显示或隐藏自由度标注">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.8 12s3.3-5.4 9.2-5.4S21.2 12 21.2 12s-3.3 5.4-9.2 5.4S2.8 12 2.8 12Z"/><circle cx="12" cy="12" r="2.3"/></svg>
+            <span>辅助标注</span>
+          </button>
+        </div>
+        <figcaption class="sr-only">
+          三维分子模型：单原子分子只有三个平动自由度；刚性双原子分子另有二个转动自由度；非刚性双原子分子还有一个振动模式对应的两个振动自由度；刚性非线性多原子分子有三个转动自由度。x、y、z 坐标轴固定在世界原点，调节平动时分子相对坐标轴移动。可用鼠标拖动旋转视角、滚轮缩放，也可以在下方参数面板中调节质心坐标、绕轴转角和键长偏移。
+        </figcaption>
+      </figure>
+
+      <aside class="panel" aria-label="分子与自由度控制面板">
+        <div class="panel-card selector-card">
+          <div class="block-head"><span>选择分子</span><small>MOLECULE</small></div>
+          <div id="molList"></div>
+        </div>
+
+        <div class="dof-board">
+          <div class="board-head">
+            <span>自由度构成</span>
+            <small>i = t + r + s</small>
+          </div>
+          <div class="total-row">
+            <div class="total-number"><span>i</span><strong id="totalValue">3</strong></div>
+            <div class="total-caption">总自由度<small>DEGREES OF FREEDOM</small></div>
+            <div class="board-energy">ε̄ =<b id="energyValue">1.5 kT</b></div>
+          </div>
+          <div class="counts" aria-label="点击数值可显示或隐藏对应运动">
+            <button class="count-card t" type="button" data-layer="t" aria-pressed="true">
+              <span class="count-symbol">t</span><b data-count="t">3</b><small>平动</small>
+            </button>
+            <button class="count-card r" type="button" data-layer="r" aria-pressed="false" disabled>
+              <span class="count-symbol">r</span><b data-count="r">0</b><small>转动</small>
+            </button>
+            <button class="count-card s" type="button" data-layer="s" aria-pressed="false" disabled>
+              <span class="count-symbol">s</span><b data-count="s">0</b><small>振动</small>
+            </button>
+          </div>
+          <div class="stack-bar" aria-hidden="true">
+            <span class="st" data-bar="t" style="width:42.86%"></span>
+            <span class="sr" data-bar="r" style="width:0%"></span>
+            <span class="ss" data-bar="s" style="width:0%"></span>
+          </div>
+          <p class="board-tip">点击 t / r / s 色块，可单独显示或隐藏该运动</p>
+        </div>
+
+        <div class="panel-card desc-card">
+          <div class="block-head"><span>模型说明</span><small>NOTE</small></div>
+          <p id="modelDesc">单原子分子可视为质点，只有 3 个平动自由度；绕自身轴的转动因转动惯量极小而不计。</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="params-card" id="paramsCard" aria-label="自由度参数调节">
+      <div class="params-head">
+        <div class="params-title">
+          <p class="params-eyebrow">PARAMETER CONTROL</p>
+          <h2>自由度参数</h2>
+          <p>用质心坐标、绕轴转角和键长偏移直接控制分子运动；拖动滑块即切换为手动模式。</p>
+        </div>
+        <div class="params-actions">
+          <div class="mode-switch" role="group" aria-label="运动模式">
+            <button type="button" data-mode="auto" aria-pressed="true">自动演示</button>
+            <button type="button" data-mode="manual" aria-pressed="false">手动调节</button>
+          </div>
+          <span class="param-hint">拖动任一参数 → 接管运动</span>
+        </div>
+      </div>
+
+      <div class="size-row">
+        <label class="size-label" for="sizeRange">分子尺寸</label>
+        <input id="sizeRange" type="range" min="0.4" max="2" step="0.05" value="1" aria-label="分子显示尺寸">
+        <output id="sizeValue" for="sizeRange">100%</output>
+        <span class="size-note">仅改变显示大小，不影响坐标与角度</span>
+      </div>
+
+      <div class="param-grid">
+        <div class="param-group t">
+          <div class="param-group-head">
+            <span class="dot" aria-hidden="true"></span>
+            <b>平动自由度</b>
+            <em>t = <span data-param-count="t">3</span></em>
+            <button class="origin-btn" id="originBtn" type="button" title="将质心移到坐标原点" aria-label="将质心移到坐标原点">归零</button>
+          </div>
+          <p class="param-sub">质心位置坐标 (x, y, z)</p>
+          <label class="param-row" data-param-row="tx">
+            <span class="param-sym">x</span>
+            <input id="param-tx" type="range" data-param="tx" min="-1" max="1" step="0.01" value="0" aria-label="质心 x 坐标">
+            <output for="param-tx" data-out="tx">0.00</output>
+          </label>
+          <label class="param-row" data-param-row="ty">
+            <span class="param-sym">y</span>
+            <input id="param-ty" type="range" data-param="ty" min="-1" max="1" step="0.01" value="0" aria-label="质心 y 坐标">
+            <output for="param-ty" data-out="ty">0.00</output>
+          </label>
+          <label class="param-row" data-param-row="tz">
+            <span class="param-sym">z</span>
+            <input id="param-tz" type="range" data-param="tz" min="-1" max="1" step="0.01" value="0" aria-label="质心 z 坐标">
+            <output for="param-tz" data-out="tz">0.00</output>
+          </label>
+          <p class="param-note">沿三个独立坐标方向的位移，对应 <b>t = 3</b>。</p>
+        </div>
+
+        <div class="param-group r">
+          <div class="param-group-head">
+            <span class="dot" aria-hidden="true"></span>
+            <b>转动自由度</b>
+            <em>r = <span data-param-count="r">2</span></em>
+          </div>
+          <p class="param-sub">绕坐标轴的转角 θ<sub>x</sub> / θ<sub>y</sub> / θ<sub>z</sub></p>
+          <label class="param-row" data-param-row="rx">
+            <span class="param-sym">θx</span>
+            <input id="param-rx" type="range" data-param="rx" min="-180" max="180" step="1" value="0" aria-label="绕 x 轴转角">
+            <output for="param-rx" data-out="rx">0°</output>
+          </label>
+          <label class="param-row" data-param-row="ry">
+            <span class="param-sym">θy</span>
+            <input id="param-ry" type="range" data-param="ry" min="-180" max="180" step="1" value="0" aria-label="绕 y 轴转角">
+            <output for="param-ry" data-out="ry">0°</output>
+          </label>
+          <label class="param-row" data-param-row="rz">
+            <span class="param-sym">θz</span>
+            <input id="param-rz" type="range" data-param="rz" min="-180" max="180" step="1" value="0" aria-label="绕 z 轴转角">
+            <output for="param-rz" data-out="rz">0°</output>
+          </label>
+          <p class="param-note" id="noteR">双原子：绕键轴 x 的自转不计，有效转动轴为 y、z。</p>
+        </div>
+
+        <div class="param-group s">
+          <div class="param-group-head">
+            <span class="dot" aria-hidden="true"></span>
+            <b>振动自由度</b>
+            <em>s = <span data-param-count="s">0</span></em>
+          </div>
+          <p class="param-sub">键长偏移 Δr</p>
+          <label class="param-row" data-param-row="vib">
+            <span class="param-sym">Δr</span>
+            <input id="param-vib" type="range" data-param="vib" min="-0.16" max="0.16" step="0.005" value="0" aria-label="键长偏移">
+            <output for="param-vib" data-out="vib">0.00</output>
+          </label>
+          <p class="param-note" id="noteS">刚性模型 s = 0，原子间距不变，不计振动。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="lower" aria-label="自由度对照与能量均分定理">
+      <article class="data-card">
+        <div class="section-head">
+          <div class="section-title">
+            <h2>自由度对照表</h2>
+            <span>DEGREES OF FREEDOM</span>
+          </div>
+          <div class="section-note">点击任意行，切换上方 3D 分子</div>
+        </div>
+        <div class="table-scroll">
+          <table class="dof-table">
+            <thead>
+              <tr>
+                <th>分子种类<span class="th-sym" style="font-style:normal;font-family:var(--sans);font-size:8px;letter-spacing:.1em;color:var(--muted)">MOLECULE</span></th>
+                <th>平动自由度<span class="th-sym">t</span></th>
+                <th>转动自由度<span class="th-sym">r</span></th>
+                <th>振动自由度<span class="th-sym">s</span></th>
+                <th>总自由度<span class="th-sym">i = t + r + s</span></th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="data-foot">
+          <span><b>注：</b>“刚性多原子”按非线性分子计；线性多原子分子（如 CO₂）的转动自由度 r = 2。</span>
+          <span>经典能量均分 · 室温近似</span>
+        </div>
+      </article>
+
+      <aside class="theory-card" aria-label="能量均分定理">
+        <div class="block-head"><span>能量均分</span><small>EQUIPARTITION</small></div>
+        <div class="eq-main">
+          <span class="eps">ε̄</span>
+          <span>=</span>
+          <span class="frac"><b>i</b><b>2</b></span>
+          <span>kT</span>
+        </div>
+        <p class="theory-lead">
+          平衡态下，每一个自由度平均分得 <b>½kT</b> 的能量。总自由度越多，分子的平均热运动能量越大。
+        </p>
+        <div class="eq-sub">
+          <span class="eq-sub-math">
+            <span>U</span>
+            <span>=</span>
+            <span class="frac"><b>i</b><b>2</b></span>
+            <span>νRT</span>
+          </span>
+          <small>ν mol 理想气体内能</small>
+        </div>
+        <div class="theory-example">
+          <span>当前模型 · <b id="theoryModel">He</b></span>
+          <b id="theoryExample">i = 3 → ε̄ = 1.5 kT</b>
+        </div>
+        <p class="theory-note">
+          <b>关于振动：</b>非刚性双原子分子的 s = 2 对应沿键轴振动的动能与势能两个自由度；经典理论下每个自由度仍平均贡献 ½kT。低温时振动可能被“冻结”，本演示按经典模型处理。
+        </p>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span><b>内容依据：</b>12.5 能量均分定理 · 理想气体的内能　|　经典能量均分模型，可离线运行</span>
+    <span class="keys">
+      <span class="key"><kbd>1</kbd>–<kbd>4</kbd> 切换</span>
+      <span class="key"><kbd>Space</kbd> 暂停</span>
+      <span class="key"><kbd>R</kbd> 重置视角</span>
+      <span class="key"><kbd>G</kbd> 标注</span>
+    </span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const TAU = Math.PI * 2;
+  const MODEL_SCALE = .64;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const DOT_COLORS = {
+    teal: '#63d8c6',
+    rust: '#ff7b72',
+    cream: '#f2d48f',
+    blue: '#64aaff'
+  };
+
+  const MOLECULES = {
+    mono: {
+      id: 'mono', no: '01', name: '单原子分子', short: '单原子', specimen: 'He',
+      en: 'MONATOMIC', tableEn: 'MONOATOMIC',
+      t: 3, r: 0, s: 0,
+      atoms: [
+        { x: 0, y: 0, z: 0, r: .13, palette: 'teal', label: 'He' }
+      ],
+      bonds: [], vibrate: false,
+      rotSpeed: [0, 0, 0], ringAxes: [],
+      desc: '单原子分子可视为质点，只有 3 个平动自由度；绕自身轴的转动因转动惯量极小而不计。'
+    },
+    rigid: {
+      id: 'rigid', no: '02', name: '刚性双原子分子', short: '刚性双原子', specimen: 'N₂',
+      en: 'RIGID DIATOMIC', tableEn: 'RIGID DIATOMIC',
+      t: 3, r: 2, s: 0,
+      atoms: [
+        { x: -.79, y: 0, z: 0, r: .12, palette: 'teal', label: 'N' },
+        { x: .79, y: 0, z: 0, r: .12, palette: 'rust', label: 'N' }
+      ],
+      bonds: [[0, 1]], bondRadius: .105, vibrate: false,
+      rotSpeed: [0, .36, .53], ringAxes: ['y', 'z'],
+      desc: '两个原子由刚性键相连，键长视为不变。分子可绕垂直于键轴的两个方向转动，因此 r = 2，总自由度 i = 5。'
+    },
+    flexible: {
+      id: 'flexible', no: '03', name: '非刚性双原子分子', short: '非刚性双原子', specimen: 'O₂',
+      en: 'NON-RIGID DIATOMIC', tableEn: 'NON-RIGID DIATOMIC',
+      t: 3, r: 2, s: 2,
+      atoms: [
+        { x: -.79, y: 0, z: 0, r: .12, palette: 'rust', label: 'O' },
+        { x: .79, y: 0, z: 0, r: .12, palette: 'cream', label: 'O' }
+      ],
+      bonds: [[0, 1]], vibrate: true,
+      rotSpeed: [0, .33, .48], ringAxes: ['y', 'z'],
+      desc: '键长可以变化，原子沿键轴做简谐振动。s = 2 对应振动的动能与势能两个自由度；经典模型下总自由度 i = 7。'
+    },
+    poly: {
+      id: 'poly', no: '04', name: '刚性多原子分子', short: '刚性多原子', specimen: 'H₂O',
+      en: 'RIGID POLYATOMIC', tableEn: 'RIGID POLYATOMIC',
+      t: 3, r: 3, s: 0,
+      atoms: [
+        { x: 0, y: .3, z: 0, r: .14, palette: 'rust', label: 'O' },
+        { x: -.81, y: -.4, z: .25, r: .11, palette: 'cream', label: 'H' },
+        { x: .81, y: -.4, z: -.22, r: .11, palette: 'blue', label: 'H' }
+      ],
+      bonds: [[0, 1], [0, 2]], bondRadius: .09, vibrate: false,
+      rotSpeed: [.22, .37, .29], ringAxes: ['x', 'y', 'z'],
+      desc: '以非线性三原子分子（如 H₂O）示意。刚性模型下，分子可绕三个相互垂直的轴转动，因此 r = 3，总自由度 i = 6。'
+    }
+  };
+  MOLECULES.mono.total = 3;
+  MOLECULES.rigid.total = 5;
+  MOLECULES.flexible.total = 7;
+  MOLECULES.poly.total = 6;
+
+  const ORDER = ['mono', 'rigid', 'flexible', 'poly'];
+  const LEGEND = { t: '平动', r: '转动', s: '振动' };
+
+  const state = {
+    moleculeId: 'mono',
+    time: 0,
+    playing: !reducedMotion,
+    speed: 1,
+    sizeScale: 1,
+    showGuides: true,
+    t: true,
+    r: false,
+    s: false,
+    w: { t: 1, r: 0, s: 0 },
+    rot: { x: .08, y: -.34, z: .2 },
+    reveal: 1,
+    flash: 0,
+    trailClock: 0,
+    manualMode: false,
+    manual: { tx: 0, ty: 0, tz: 0, rx: 0, ry: 0, rz: 0, vib: 0 },
+    returnBlend: 1,
+    returnFrom: null,
+    paramClock: 0
+  };
+
+  const view = {
+    yaw: -.62, pitch: .24, zoom: 1,
+    targetYaw: -.62, targetPitch: .24, targetZoom: 1,
+    width: 0, height: 0, dpr: 1,
+    cx: 0, cy: 0, focal: 1100,
+    camDist: 8.7
+  };
+
+  const canvas = document.getElementById('scene');
+  const stageCard = document.getElementById('stageCard');
+  const ctx = canvas.getContext('2d');
+  const playBtn = document.getElementById('playBtn');
+  const speedRange = document.getElementById('speedRange');
+  const speedValue = document.getElementById('speedValue');
+  const sizeRange = document.getElementById('sizeRange');
+  const sizeValue = document.getElementById('sizeValue');
+  const resetViewBtn = document.getElementById('resetViewBtn');
+  const guideBtn = document.getElementById('guideBtn');
+  const sceneHint = document.getElementById('sceneHint');
+  const molList = document.getElementById('molList');
+  const tableBody = document.getElementById('tableBody');
+  const totalValue = document.getElementById('totalValue');
+  const energyValue = document.getElementById('energyValue');
+  const sceneIndex = document.getElementById('sceneIndex');
+  const sceneName = document.getElementById('sceneName');
+  const sceneSub = document.getElementById('sceneSub');
+  const sceneMode = document.getElementById('sceneMode');
+  const modelDesc = document.getElementById('modelDesc');
+  const theoryModel = document.getElementById('theoryModel');
+  const theoryExample = document.getElementById('theoryExample');
+  const countButtons = Array.from(document.querySelectorAll('.count-card'));
+  const bars = {
+    t: document.querySelector('[data-bar="t"]'),
+    r: document.querySelector('[data-bar="r"]'),
+    s: document.querySelector('[data-bar="s"]')
+  };
+  const legendItems = Array.from(document.querySelectorAll('[data-legend]'));
+  const paramsCard = document.getElementById('paramsCard');
+  const modeButtons = Array.from(document.querySelectorAll('.mode-switch [data-mode]'));
+  const paramInputs = Array.from(document.querySelectorAll('input[data-param]'));
+  const paramOutputs = {};
+  document.querySelectorAll('[data-out]').forEach(el => { paramOutputs[el.dataset.out] = el; });
+  const paramCounts = {};
+  document.querySelectorAll('[data-param-count]').forEach(el => { paramCounts[el.dataset.paramCount] = el; });
+  const noteR = document.getElementById('noteR');
+  const noteS = document.getElementById('noteS');
+  const originBtn = document.getElementById('originBtn');
+  const D2R = Math.PI / 180;
+  const R2D = 180 / Math.PI;
+
+  const molIcon = {
+    mono: `<svg viewBox="0 0 42 30" aria-hidden="true"><circle cx="21" cy="15" r="8.2" fill="currentColor" opacity=".92"/><ellipse cx="21" cy="24.4" rx="9.6" ry="2" fill="currentColor" opacity=".13"/></svg>`,
+    rigid: `<svg viewBox="0 0 42 30" aria-hidden="true"><path d="M14.5 15h13" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity=".6"/><circle cx="12" cy="15" r="6.4" fill="currentColor" opacity=".92"/><circle cx="30" cy="15" r="6.4" fill="currentColor" opacity=".92"/><ellipse cx="21" cy="24" rx="15" ry="2" fill="currentColor" opacity=".12"/></svg>`,
+    flexible: `<svg viewBox="0 0 42 30" aria-hidden="true"><path d="M16 15q2.5-5.5 5 0t5 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".75"/><circle cx="11" cy="15" r="5.8" fill="currentColor" opacity=".92"/><circle cx="31" cy="15" r="5.8" fill="currentColor" opacity=".92"/><ellipse cx="21" cy="24" rx="14" ry="2" fill="currentColor" opacity=".12"/></svg>`,
+    poly: `<svg viewBox="0 0 42 30" aria-hidden="true"><path d="M20 14 12 21M22 14l7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".58"/><circle cx="21" cy="12.5" r="5.6" fill="currentColor" opacity=".92"/><circle cx="10.5" cy="22" r="4" fill="currentColor" opacity=".72"/><circle cx="30.5" cy="22" r="4" fill="currentColor" opacity=".72"/><ellipse cx="21" cy="27.3" rx="13.5" ry="1.8" fill="currentColor" opacity=".1"/></svg>`
+  };
+
+  /* ---------------- build UI ---------------- */
+  function buildMoleculeOptions() {
+    molList.innerHTML = ORDER.map(id => {
+      const m = MOLECULES[id];
+      return `
+        <button class="mol-option" type="button" data-mol="${m.id}" aria-pressed="${m.id === state.moleculeId}">
+          <span class="mol-icon">${molIcon[m.id]}</span>
+          <span class="mol-copy"><b>${m.short}</b><small>${m.specimen} · ${m.en}</small></span>
+          <span class="mol-count"><b>${m.total}</b><small>i</small></span>
+        </button>`;
+    }).join('');
+    molList.querySelectorAll('.mol-option').forEach(btn => {
+      btn.addEventListener('click', () => selectMolecule(btn.dataset.mol));
+    });
+  }
+
+  function buildTable() {
+    tableBody.innerHTML = ORDER.map(id => {
+      const m = MOLECULES[id];
+      const cls = n => 'num' + (n === 0 ? ' zero' : '');
+      return `
+        <tr data-mol="${m.id}" tabindex="0" aria-selected="${m.id === state.moleculeId}">
+          <td class="mol-cell"><b>${m.short}</b><small>${m.tableEn}</small></td>
+          <td><span class="${cls(m.t)} t">${m.t}</span></td>
+          <td><span class="${cls(m.r)} r">${m.r}</span></td>
+          <td><span class="${cls(m.s)} s">${m.s}</span></td>
+          <td><span class="total-badge">${m.total}</span></td>
+        </tr>`;
+    }).join('');
+    tableBody.querySelectorAll('tr').forEach(row => {
+      row.addEventListener('click', () => selectMolecule(row.dataset.mol));
+      row.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectMolecule(row.dataset.mol);
+        }
+      });
+    });
+  }
+
+  function updateUI(animate = true) {
+    const m = MOLECULES[state.moleculeId];
+    sceneIndex.textContent = m.no;
+    sceneName.textContent = m.name;
+    sceneSub.textContent = `${m.specimen} · ${m.en}`;
+    sceneMode.textContent = state.manualMode ? 'MANUAL · 3D' : (state.playing ? 'AUTO · 3D' : 'PAUSED · 3D');
+    stageCard.classList.toggle('is-manual', state.manualMode);
+    paramsCard.classList.toggle('is-manual', state.manualMode);
+    modelDesc.textContent = m.desc;
+    theoryModel.textContent = m.specimen;
+    theoryExample.textContent = `i = ${m.total} → ε̄ = ${(m.total / 2).toFixed(1)} kT`;
+    energyValue.textContent = `${(m.total / 2).toFixed(1)} kT`;
+    totalValue.textContent = m.total;
+    if (animate) {
+      totalValue.classList.remove('pop');
+      void totalValue.offsetWidth;
+      totalValue.classList.add('pop');
+    }
+
+    document.querySelectorAll('.mol-option').forEach(btn => {
+      btn.setAttribute('aria-pressed', btn.dataset.mol === m.id ? 'true' : 'false');
+    });
+    tableBody.querySelectorAll('tr').forEach(row => {
+      const active = row.dataset.mol === m.id;
+      row.classList.toggle('is-active', active);
+      row.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    ['t', 'r', 's'].forEach(k => {
+      const n = m[k];
+      const btn = countButtons.find(b => b.dataset.layer === k);
+      const b = btn.querySelector('[data-count]');
+      b.textContent = n;
+      btn.disabled = n === 0;
+      btn.setAttribute('aria-pressed', n > 0 && state[k] ? 'true' : 'false');
+      btn.classList.toggle('is-zero', n === 0);
+      if (bars[k]) {
+        bars[k].style.width = `${(n / 7) * 100}%`;
+        bars[k].classList.toggle('off', !state[k] || n === 0);
+      }
+      const legend = legendItems.find(el => el.dataset.legend === k);
+      if (legend) {
+        legend.querySelector('b').textContent = n;
+        legend.classList.toggle('is-off', n === 0 || !state[k]);
+      }
+    });
+
+    stageCard.classList.toggle('is-paused', !state.playing);
+    playBtn.setAttribute('aria-label', state.manualMode ? '返回自动演示' : (state.playing ? '暂停动画' : '播放动画'));
+    guideBtn.setAttribute('aria-pressed', state.showGuides ? 'true' : 'false');
+    updateParamUI();
+  }
+
+  /* ---------------- free-degree parameters ---------------- */
+  function paramAvailable(key, m = MOLECULES[state.moleculeId]) {
+    if (key[0] === 't') return m.t > 0 && state.t;
+    if (key[0] === 'r') {
+      const axis = key[1];
+      return m.r > 0 && m.ringAxes.includes(axis) && state.r;
+    }
+    return m.s > 0 && state.s;
+  }
+
+  function wrapDeg(v) {
+    return ((v + 180) % 360 + 360) % 360 - 180;
+  }
+
+  function formatParam(key, value) {
+    if (key[0] === 'r') return `${Math.round(value)}°`;
+    return Number(value).toFixed(2);
+  }
+
+  function updateRangeFill(input) {
+    const min = Number(input.min);
+    const max = Number(input.max);
+    const value = Number(input.value);
+    const pct = max === min ? 0 : ((value - min) / (max - min)) * 100;
+    input.style.setProperty('--fill', `${clamp(pct, 0, 100)}%`);
+  }
+
+  function setParamDisplay(key, value) {
+    const input = paramInputs.find(i => i.dataset.param === key);
+    if (!input) return;
+    const min = Number(input.min);
+    const max = Number(input.max);
+    const v = clamp(Number(value), min, max);
+    input.value = v;
+    updateRangeFill(input);
+    if (paramOutputs[key]) paramOutputs[key].textContent = formatParam(key, v);
+  }
+
+  function updateParamValues() {
+    const m = MOLECULES[state.moleculeId];
+    if (state.manualMode) {
+      ['tx', 'ty', 'tz', 'rx', 'ry', 'rz', 'vib'].forEach(key => {
+        if (paramAvailable(key, m)) setParamDisplay(key, state.manual[key]);
+      });
+      return;
+    }
+
+    const com = getCom(state.time, state.w.t);
+    ['tx', 'ty', 'tz'].forEach(key => {
+      if (paramAvailable(key, m)) {
+        setParamDisplay(key, key === 'tx' ? com.x : key === 'ty' ? com.y : com.z);
+      }
+    });
+    ['x', 'y', 'z'].forEach(axis => {
+      const key = 'r' + axis;
+      if (paramAvailable(key, m)) setParamDisplay(key, wrapDeg(state.rot[axis] * R2D));
+    });
+    if (paramAvailable('vib', m)) {
+      const vib = Math.sin(state.time * 5.15) * .105 * state.w.s;
+      setParamDisplay('vib', vib);
+    }
+  }
+
+  function updateParamUI() {
+    const m = MOLECULES[state.moleculeId];
+    if (paramCounts.t) paramCounts.t.textContent = m.t;
+    if (paramCounts.r) paramCounts.r.textContent = m.r;
+    if (paramCounts.s) paramCounts.s.textContent = m.s;
+
+    paramInputs.forEach(input => {
+      const key = input.dataset.param;
+      const ok = paramAvailable(key, m);
+      input.disabled = !ok;
+      const row = input.closest('.param-row');
+      if (row) row.classList.toggle('is-unavailable', !ok);
+      if (!ok && paramOutputs[key]) paramOutputs[key].textContent = '—';
+      updateRangeFill(input);
+    });
+
+    modeButtons.forEach(btn => {
+      const active = btn.dataset.mode === 'manual' ? state.manualMode : !state.manualMode;
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+
+    if (noteR) {
+      if (m.r === 0) noteR.textContent = '单原子无转动自由度 (r = 0)。';
+      else if (m.id === 'poly') noteR.textContent = '非线性多原子：绕 x、y、z 三轴转动均计入。';
+      else noteR.textContent = '双原子：绕键轴 x 的自转不计入，有效转动轴为 y、z。';
+    }
+    if (noteS) {
+      noteS.textContent = m.vibrate
+        ? 's = 2 对应振动的动能与势能；Δr 为键长偏移。'
+        : '刚性模型 s = 0，原子间距不变，不计振动。';
+    }
+  }
+
+  function resetManualPose() {
+    state.manual = { tx: 0, ty: 0, tz: 0, rx: 0, ry: 0, rz: 0, vib: 0 };
+  }
+
+  function readManualFromAuto() {
+    const m = MOLECULES[state.moleculeId];
+    const com = getCom(state.time, state.w.t);
+    const vib = m.vibrate ? Math.sin(state.time * 5.15) * .105 * state.w.s : 0;
+    state.manual = {
+      tx: com.x, ty: com.y, tz: com.z,
+      rx: m.ringAxes.includes('x') ? wrapDeg(state.rot.x * R2D) : 0,
+      ry: m.ringAxes.includes('y') ? wrapDeg(state.rot.y * R2D) : 0,
+      rz: m.ringAxes.includes('z') ? wrapDeg(state.rot.z * R2D) : 0,
+      vib
+    };
+    state.returnBlend = 1;
+    state.returnFrom = null;
+  }
+
+  function beginManualMode() {
+    if (state.manualMode) return;
+    readManualFromAuto();
+    state.manualMode = true;
+    state.playing = false;
+    state.paramClock = 0;
+    updateUI(false);
+    updateParamValues();
+  }
+
+  function exitManualMode() {
+    if (!state.manualMode) {
+      if (!state.playing) {
+        state.playing = true;
+        updateUI(false);
+        updateParamValues();
+      }
+      return;
+    }
+    const m = MOLECULES[state.moleculeId];
+    const fromCom = {
+      x: state.manual.tx * state.w.t,
+      y: state.manual.ty * state.w.t,
+      z: state.manual.tz * state.w.t
+    };
+    const fromRot = {
+      x: m.ringAxes.includes('x') ? state.manual.rx * D2R : state.rot.x,
+      y: m.ringAxes.includes('y') ? state.manual.ry * D2R : state.rot.y,
+      z: m.ringAxes.includes('z') ? state.manual.rz * D2R : state.rot.z
+    };
+    const fromVib = m.vibrate ? state.manual.vib * state.w.s : 0;
+    state.rot = { ...fromRot };
+    state.returnFrom = { com: fromCom, rot: { ...fromRot }, vib: fromVib };
+    state.returnBlend = 0;
+    state.manualMode = false;
+    state.playing = true;
+    state.paramClock = 0;
+    updateUI(false);
+    updateParamValues();
+  }
+
+  /* ---------------- selection and controls ---------------- */
+  function resetOrientation(m) {
+    state.rot.x = m.id === 'poly' ? .18 : .045;
+    state.rot.y = m.id === 'poly' ? .18 : .08;
+    state.rot.z = m.id === 'poly' ? .08 : .18;
+  }
+
+  function selectMolecule(id, opts = {}) {
+    if (!MOLECULES[id]) return;
+    const changed = id !== state.moleculeId;
+    state.moleculeId = id;
+    const m = MOLECULES[id];
+    state.t = true;
+    state.r = m.r > 0;
+    state.s = m.s > 0;
+    state.returnBlend = 1;
+    state.returnFrom = null;
+    if (changed || opts.initial) {
+      if (state.manualMode) resetManualPose();
+      else resetOrientation(m);
+    }
+    state.reveal = opts.initial ? 1 : 0;
+    state.flash = opts.initial ? 0 : 1;
+    if (opts.initial) {
+      state.w.t = 1;
+      state.w.r = m.r > 0 ? 1 : 0;
+      state.w.s = m.s > 0 ? 1 : 0;
+    }
+    updateUI(!opts.initial);
+    updateParamValues();
+  }
+
+  function toggleLayer(k) {
+    const m = MOLECULES[state.moleculeId];
+    if (!m[k]) return;
+    state[k] = !state[k];
+    updateUI(false);
+    updateParamValues();
+  }
+
+  function togglePlay() {
+    if (state.manualMode) {
+      exitManualMode();
+      return;
+    }
+    state.playing = !state.playing;
+    updateUI(false);
+    updateParamValues();
+  }
+
+  function resetView() {
+    view.targetYaw = -.62;
+    view.targetPitch = .24;
+    view.targetZoom = 1;
+  }
+
+  function toggleGuides() {
+    state.showGuides = !state.showGuides;
+    guideBtn.setAttribute('aria-pressed', state.showGuides ? 'true' : 'false');
+  }
+
+  function setSpeed(v) {
+    state.speed = Number(v);
+    speedValue.textContent = `${state.speed.toFixed(1)}×`;
+    const pct = ((state.speed - .4) / 1.4) * 100;
+    speedRange.style.setProperty('--fill', `${pct}%`);
+  }
+
+  function setModelSize(v) {
+    state.sizeScale = clamp(Number(v), .4, 2);
+    sizeValue.textContent = `${Math.round(state.sizeScale * 100)}%`;
+    const pct = ((state.sizeScale - .4) / 1.6) * 100;
+    sizeRange.style.setProperty('--fill', `${pct}%`);
+  }
+
+  countButtons.forEach(btn => btn.addEventListener('click', () => toggleLayer(btn.dataset.layer)));
+  playBtn.addEventListener('click', togglePlay);
+  resetViewBtn.addEventListener('click', resetView);
+  guideBtn.addEventListener('click', toggleGuides);
+  speedRange.addEventListener('input', e => setSpeed(e.target.value));
+  sizeRange.addEventListener('input', e => setModelSize(e.target.value));
+
+  modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.mode === 'manual') beginManualMode();
+      else exitManualMode();
+    });
+  });
+
+  if (originBtn) {
+    originBtn.addEventListener('click', () => {
+      if (!state.manualMode) beginManualMode();
+      state.manual.tx = 0;
+      state.manual.ty = 0;
+      state.manual.tz = 0;
+      updateUI(false);
+      updateParamValues();
+    });
+  }
+
+  paramInputs.forEach(input => {
+    input.addEventListener('pointerdown', () => {
+      if (!input.disabled && !state.manualMode) beginManualMode();
+    });
+    input.addEventListener('input', () => {
+      if (input.disabled) return;
+      const key = input.dataset.param;
+      const value = Number(input.value);
+      if (!state.manualMode) beginManualMode();
+      state.manual[key] = value;
+      updateParamValues();
+    });
+  });
+
+  /* ---------------- canvas sizing ---------------- */
+  function resize() {
+    const rect = stageCard.getBoundingClientRect();
+    view.width = Math.max(1, rect.width);
+    view.height = Math.max(1, rect.height);
+    view.dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(view.width * view.dpr);
+    canvas.height = Math.round(view.height * view.dpr);
+    canvas.style.width = view.width + 'px';
+    canvas.style.height = view.height + 'px';
+    ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+    view.cx = view.width * .5;
+    view.cy = view.height * (view.width < 560 ? .50 : .52);
+    view.focal = Math.max(view.width * 1.22, view.height * 1.82);
+    view.focal = Math.min(view.focal, 1460);
+  }
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(resize).observe(stageCard);
+  } else {
+    window.addEventListener('resize', resize);
+  }
+  resize();
+
+  /* ---------------- camera and 3D helpers ---------------- */
+  function toCamera(p) {
+    const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw);
+    const cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
+    const x1 = p.x * cy + p.z * sy;
+    const z1 = -p.x * sy + p.z * cy;
+    const y2 = p.y * cp - z1 * sp;
+    const z2 = p.y * sp + z1 * cp;
+    return { x: x1, y: y2, z: z2 };
+  }
+
+  function project(p) {
+    const v = toCamera(p);
+    const s = (view.focal / (view.camDist + v.z)) * view.zoom;
+    return {
+      x: view.cx + v.x * s,
+      y: view.cy - v.y * s,
+      s,
+      z: v.z
+    };
+  }
+
+  function rotatePoint(p, r) {
+    const cx = Math.cos(r.x), sx = Math.sin(r.x);
+    const cy = Math.cos(r.y), sy = Math.sin(r.y);
+    const cz = Math.cos(r.z), sz = Math.sin(r.z);
+    const y1 = p.y * cx - p.z * sx;
+    const z1 = p.y * sx + p.z * cx;
+    const x1 = p.x;
+    const x2 = x1 * cy + z1 * sy;
+    const z2 = -x1 * sy + z1 * cy;
+    const y3 = y1 * cz - x2 * sz;
+    const x3 = y1 * sz + x2 * cz;
+    return { x: x3, y: y3, z: z2 };
+  }
+
+  function rotateVector(v, r) {
+    return rotatePoint(v, r);
+  }
+
+  function getCom(t, weight) {
+    if (weight <= .0001) return { x: 0, y: 0, z: 0 };
+    // all components are zero at t = 0: the molecule starts exactly at the origin
+    return {
+      x: weight * .34 * Math.sin(t * .52),
+      y: weight * .15 * Math.sin(t * .77),
+      z: weight * .24 * Math.sin(t * .41)
+    };
+  }
+
+  function getPose() {
+    const m = MOLECULES[state.moleculeId];
+    let com, rot, vib;
+
+    if (state.manualMode) {
+      com = {
+        x: state.manual.tx * state.w.t,
+        y: state.manual.ty * state.w.t,
+        z: state.manual.tz * state.w.t
+      };
+      rot = {
+        x: m.ringAxes.includes('x') ? state.manual.rx * D2R * state.w.r : 0,
+        y: m.ringAxes.includes('y') ? state.manual.ry * D2R * state.w.r : 0,
+        z: m.ringAxes.includes('z') ? state.manual.rz * D2R * state.w.r : 0
+      };
+      vib = m.vibrate ? state.manual.vib * state.w.s : 0;
+    } else {
+      com = getCom(state.time, state.w.t);
+      rot = state.rot;
+      vib = m.vibrate ? Math.sin(state.time * 5.15) * .105 * state.w.s : 0;
+      if (state.returnBlend < 1 && state.returnFrom) {
+        const b = easeOut(state.returnBlend);
+        const from = state.returnFrom;
+        com = {
+          x: lerp(from.com.x, com.x, b),
+          y: lerp(from.com.y, com.y, b),
+          z: lerp(from.com.z, com.z, b)
+        };
+        rot = {
+          x: lerp(from.rot.x, rot.x, b),
+          y: lerp(from.rot.y, rot.y, b),
+          z: lerp(from.rot.z, rot.z, b)
+        };
+        vib = lerp(from.vib, vib, b);
+      }
+    }
+
+    const born = .88 + .12 * easeOut(state.reveal);
+    const visualScale = MODEL_SCALE * state.sizeScale;
+    const atoms = m.atoms.map((a, i) => {
+      let local = { x: a.x, y: a.y, z: a.z };
+      if (m.vibrate) {
+        local.x += (i === 0 ? -1 : 1) * vib;
+      }
+      local.x *= born * visualScale;
+      local.y *= born * visualScale;
+      local.z *= born * visualScale;
+      const p = rotatePoint(local, rot);
+      return {
+        x: p.x + com.x, y: p.y + com.y, z: p.z + com.z,
+        radius: a.r * born * visualScale * (.92 + .08 * easeOut(state.reveal)),
+        atom: a
+      };
+    });
+    return { m, atoms, com, vib, born, rot };
+  }
+
+  /* ---------------- drawing primitives ---------------- */
+  function drawBackdrop(time) {
+    const w = view.width, h = view.height;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const bg = ctx.createRadialGradient(view.cx, view.cy * .92, 0, view.cx, view.cy * .92, Math.max(w, h) * .66);
+    bg.addColorStop(0, 'rgba(31,104,96,.20)');
+    bg.addColorStop(.42, 'rgba(22,80,75,.08)');
+    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    for (let i = 0; i < 34; i++) {
+      const x = ((i * 137.31 + 29.7) % 100) / 100 * w;
+      const y = ((i * 83.17 + 11.3) % 100) / 100 * h;
+      const tw = .55 + .45 * Math.sin(time * .7 + i * 2.1);
+      const rr = .45 + (i % 4) * .24;
+      ctx.beginPath();
+      ctx.arc(x, y, rr, 0, TAU);
+      ctx.fillStyle = `rgba(202,238,230,${.035 + .055 * tw})`;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawFloor() {
+    const y = -1.58;
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = -4; i <= 4; i++) {
+      const major = i === 0;
+      const p1 = project({ x: i, y, z: -4.25 });
+      const p2 = project({ x: i, y, z: 4.25 });
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.strokeStyle = major ? 'rgba(132,202,188,.11)' : 'rgba(151,210,198,.050)';
+      ctx.stroke();
+
+      const q1 = project({ x: -4.25, y, z: i });
+      const q2 = project({ x: 4.25, y, z: i });
+      ctx.beginPath();
+      ctx.moveTo(q1.x, q1.y);
+      ctx.lineTo(q2.x, q2.y);
+      ctx.strokeStyle = major ? 'rgba(132,202,188,.11)' : 'rgba(151,210,198,.050)';
+      ctx.stroke();
+    }
+
+    [2.25, 3.25].forEach((radius, idx) => {
+      ctx.beginPath();
+      for (let i = 0; i <= 96; i++) {
+        const a = i / 96 * TAU;
+        const p = project({ x: Math.cos(a) * radius, y, z: Math.sin(a) * radius });
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = idx === 0 ? 'rgba(130,212,196,.12)' : 'rgba(130,212,196,.065)';
+      ctx.stroke();
+    });
+
+    ctx.beginPath();
+    const center = project({ x: 0, y, z: 0 });
+    ctx.arc(center.x, center.y, 2.2, 0, TAU);
+    ctx.fillStyle = 'rgba(154,224,210,.32)';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTrail(pose) {
+    const weight = state.w.t;
+    if (weight < .04 || !state.showGuides) return;
+    const m = pose.m;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const count = 46;
+    for (let i = 0; i < count; i++) {
+      const tt = state.time - i * .055;
+      const c = getCom(tt, weight);
+      const p = project(c);
+      const a = (1 - i / count) * .20;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(.6, 2.1 * (1 - i / count)), 0, TAU);
+      ctx.fillStyle = `rgba(126,216,200,${a})`;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawShadows(pose) {
+    const floorY = -1.58;
+    ctx.save();
+    for (const atom of pose.atoms) {
+      const p = project({ x: atom.x, y: floorY, z: atom.z });
+      const rad = Math.max(5, atom.radius * p.s * 1.08);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(1, .29);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rad);
+      g.addColorStop(0, 'rgba(0,0,0,.38)');
+      g.addColorStop(.55, 'rgba(0,8,8,.18)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(0, 0, rad, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawArrow3D(start, end, color, width, alpha, label, labelSize = 9) {
+    const p1 = project(start);
+    const p2 = project(end);
+    const dx = p2.x - p1.x, dy = p2.y - p1.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 3) return;
+    const ux = dx / len, uy = dy / len;
+    const head = clamp(len * .14, 5, labelSize * 1.08);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // dark halo keeps the axis legible when it crosses a bright atom
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x - ux * head * .72, p2.y - uy * head * .72);
+    ctx.strokeStyle = 'rgba(2,15,16,.52)';
+    ctx.lineWidth = width + 2.2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x - ux * head * .8, p2.y - uy * head * .8);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(p2.x + ux * 1.2, p2.y + uy * 1.2);
+    ctx.lineTo(p2.x - ux * head - uy * head * .42, p2.y - uy * head + ux * head * .42);
+    ctx.lineTo(p2.x - ux * head + uy * head * .42, p2.y - uy * head - ux * head * .42);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(2,15,16,.45)';
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+
+    if (label) {
+      ctx.font = `italic 600 ${labelSize}px "Cambria Math", Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(1,12,13,.9)';
+      ctx.shadowBlur = 5;
+      ctx.fillStyle = color;
+      ctx.fillText(label, p2.x + ux * (labelSize * .82), p2.y + uy * (labelSize * .82));
+      ctx.shadowBlur = 0;
+    }
+    ctx.restore();
+  }
+
+  function drawTranslationGuides(pose) {
+    if (!state.showGuides) return;
+
+    // The coordinate frame is anchored at the world origin, not at the molecule.
+    // Translation therefore reads as motion relative to fixed x/y/z axes.
+    const c = { x: 0, y: 0, z: 0 };
+    const unit = (view.focal / view.camDist) * view.zoom;
+    const vertical = Math.max(.72, Math.cos(view.pitch));
+    const length = clamp((view.cy - 34) / (unit * vertical), 1.0, 2.35);
+    const tail = length * .30;
+    const axes = [
+      { v: { x: 1, y: 0, z: 0 }, color: '#e2a363', label: 'x' },
+      { v: { x: 0, y: 1, z: 0 }, color: '#78c9b9', label: 'y' },
+      { v: { x: 0, y: 0, z: 1 }, color: '#82a9e3', label: 'z' }
+    ];
+    for (const a of axes) {
+      drawArrow3D(
+        { x: c.x - a.v.x * tail, y: c.y - a.v.y * tail, z: c.z - a.v.z * tail },
+        { x: c.x + a.v.x * length, y: c.y + a.v.y * length, z: c.z + a.v.z * length },
+        a.color, 1.55, .55, a.label, 12.5
+      );
+    }
+
+    // small origin marker; it stays put while the molecule translates
+    const cp = project(c);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cp.x, cp.y, 4.8, 0, TAU);
+    ctx.fillStyle = 'rgba(238,247,242,.82)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cp.x, cp.y, 2.3, 0, TAU);
+    ctx.fillStyle = 'rgba(5,35,33,.94)';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function ringPoint(axis, radius, angle, center) {
+    const c = Math.cos(angle) * radius;
+    const s = Math.sin(angle) * radius;
+    if (axis === 'x') return { x: center.x, y: center.y + c, z: center.z + s };
+    if (axis === 'y') return { x: center.x + c, y: center.y, z: center.z + s };
+    return { x: center.x + c, y: center.y + s, z: center.z };
+  }
+
+  const ringColors = {
+    x: 'rgba(116,210,192,.75)',
+    y: 'rgba(130,169,227,.82)',
+    z: 'rgba(227,163,92,.78)'
+  };
+  const ringRadii = { x: 1.6 * MODEL_SCALE, y: 1.75 * MODEL_SCALE, z: 1.5 * MODEL_SCALE };
+
+  function drawRotationGuides(pose) {
+    if (!state.showGuides || state.w.r < .05) return;
+    const axes = pose.m.ringAxes;
+    if (!axes.length) return;
+    ctx.save();
+    const startBase = state.time * .18;
+    axes.forEach((axis, idx) => {
+      const radius = (ringRadii[axis] + idx * .02) * state.sizeScale;
+      const phase = startBase + idx * 1.9;
+      const span = Math.PI * 1.48;
+      const pts = [];
+      const N = 74;
+      for (let i = 0; i <= N; i++) {
+        const a = phase + (i / N) * span;
+        pts.push(project(ringPoint(axis, radius, a, pose.com)));
+      }
+      ctx.beginPath();
+      pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+      ctx.strokeStyle = 'rgba(0,0,0,.22)';
+      ctx.lineWidth = 3.2;
+      ctx.stroke();
+      ctx.beginPath();
+      pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+      ctx.strokeStyle = ringColors[axis];
+      ctx.globalAlpha = .36 * state.w.r;
+      ctx.lineWidth = 1.15;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      const pEnd = pts[pts.length - 1];
+      const pPrev = pts[pts.length - 4];
+      const dx = pEnd.x - pPrev.x, dy = pEnd.y - pPrev.y;
+      const l = Math.hypot(dx, dy) || 1;
+      const ux = dx / l, uy = dy / l;
+      const head = 6;
+      ctx.beginPath();
+      ctx.moveTo(pEnd.x, pEnd.y);
+      ctx.lineTo(pEnd.x - ux * head - uy * head * .5, pEnd.y - uy * head + ux * head * .5);
+      ctx.lineTo(pEnd.x - ux * head + uy * head * .5, pEnd.y - uy * head - ux * head * .5);
+      ctx.closePath();
+      ctx.fillStyle = ringColors[axis];
+      ctx.globalAlpha = .62 * state.w.r;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+    ctx.restore();
+  }
+
+  function drawVibrationGuides(pose) {
+    if (!state.showGuides || !pose.m.vibrate || state.w.s < .05) return;
+    const axis = rotateVector({ x: 1, y: 0, z: 0 }, pose.rot);
+    const vs = MODEL_SCALE * state.sizeScale;
+    const d = 1.35 * vs + Math.sin(state.time * 5.15) * .012 * vs;
+    const tail = .34 * vs;
+    const c = pose.com;
+    const leftOut = { x: c.x - axis.x * (d + tail), y: c.y - axis.y * (d + tail), z: c.z - axis.z * (d + tail) };
+    const leftIn = { x: c.x - axis.x * d, y: c.y - axis.y * d, z: c.z - axis.z * d };
+    const rightIn = { x: c.x + axis.x * d, y: c.y + axis.y * d, z: c.z + axis.z * d };
+    const rightOut = { x: c.x + axis.x * (d + tail), y: c.y + axis.y * (d + tail), z: c.z + axis.z * (d + tail) };
+    drawArrow3D(leftIn, leftOut, '#efb476', 1.05, .48 * state.w.s, '');
+    drawArrow3D(rightIn, rightOut, '#efb476', 1.05, .48 * state.w.s, '');
+  }
+
+  function drawBondRigid(m, a, b) {
+    const pa = project(a), pb = project(b);
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+    ctx.strokeStyle = 'rgba(2,16,17,.55)';
+    ctx.lineWidth = 3.4;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+    ctx.strokeStyle = 'rgba(225,242,236,.72)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawSpring(pose) {
+    const m = pose.m;
+    const a = pose.atoms[0], b = pose.atoms[1];
+    if (!a || !b) return;
+    const start = { x: a.x, y: a.y, z: a.z };
+    const end = { x: b.x, y: b.y, z: b.z };
+    const pStart = project(start);
+    const pEnd = project(end);
+    const avgS = (pStart.s + pEnd.s) * .5;
+    const radius = Math.max(.03, .06 * (avgS / 145) * MODEL_SCALE * state.sizeScale);
+    const turns = 8;
+    const N = 105;
+    const phase = state.time * .9;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // faint bond axis
+    ctx.beginPath();
+    ctx.moveTo(pStart.x, pStart.y);
+    ctx.lineTo(pEnd.x, pEnd.y);
+    ctx.strokeStyle = 'rgba(206,230,221,.14)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const u = i / N;
+      const base = {
+        x: lerp(start.x, end.x, u),
+        y: lerp(start.y, end.y, u),
+        z: lerp(start.z, end.z, u)
+      };
+      const env = Math.pow(Math.sin(Math.PI * clamp(u, 0, 1)), .55);
+      const ang = u * TAU * turns + phase;
+      base.y += Math.cos(ang) * radius * env;
+      base.z += Math.sin(ang) * radius * env;
+      pts.push(project(base));
+    }
+
+    ctx.beginPath();
+    pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+    ctx.strokeStyle = 'rgba(0,0,0,.34)';
+    ctx.lineWidth = 3.2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+    ctx.strokeStyle = 'rgba(244,194,120,.88)';
+    ctx.lineWidth = 1.55;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawAtom(atom) {
+    const p = project(atom);
+    const radius = Math.max(2.2, atom.radius * p.s);
+    if (radius < 2) return;
+    const fill = DOT_COLORS[atom.atom.palette] || DOT_COLORS.teal;
+
+    // small flat colored ball with a thin light edge — no halo
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, TAU);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.78)';
+    ctx.lineWidth = 1.15;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawMolecule(pose) {
+    const m = pose.m;
+    if (m.vibrate) {
+      drawSpring(pose);
+    } else if (m.bonds && m.bonds.length) {
+      for (const [ia, ib] of m.bonds) {
+        drawBondRigid(m, pose.atoms[ia], pose.atoms[ib]);
+      }
+    }
+
+    const sorted = pose.atoms
+      .map((a, i) => ({ a, i, p: toCamera(a) }))
+      .sort((x, y) => y.p.z - x.p.z);
+    for (const item of sorted) drawAtom(item.a);
+  }
+
+  function drawFlash(pose) {
+    if (state.flash <= .001) return;
+    const p = project(pose.com);
+    const t = 1 - state.flash;
+    const radius = 34 + t * 90;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, TAU);
+    ctx.strokeStyle = `rgba(137,225,208,${state.flash * .20})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius * .72, 0, TAU);
+    ctx.strokeStyle = `rgba(227,163,92,${state.flash * .12})`;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ---------------- render ---------------- */
+  function draw() {
+    ctx.clearRect(0, 0, view.width, view.height);
+    drawBackdrop(state.time);
+    drawFloor();
+    const pose = getPose();
+    drawShadows(pose);
+    drawTrail(pose);
+    drawTranslationGuides(pose);
+    drawVibrationGuides(pose);
+    drawMolecule(pose);
+  }
+
+  /* ---------------- simulation ---------------- */
+  let last = performance.now();
+  function update(dt) {
+    const m = MOLECULES[state.moleculeId];
+    const real = Math.min(dt, .05);
+
+    if (!state.manualMode && state.playing) {
+      state.time += real * state.speed;
+      if (m.r > 0) {
+        state.rot.x += real * state.speed * (m.rotSpeed[0] || 0) * state.w.r;
+        state.rot.y += real * state.speed * (m.rotSpeed[1] || 0) * state.w.r;
+        state.rot.z += real * state.speed * (m.rotSpeed[2] || 0) * state.w.r;
+      }
+    }
+
+    const targetT = state.t && m.t > 0 ? 1 : 0;
+    const targetR = state.r && m.r > 0 ? 1 : 0;
+    const targetS = state.s && m.s > 0 ? 1 : 0;
+    const ease = 1 - Math.exp(-real * 7);
+    state.w.t += (targetT - state.w.t) * ease;
+    state.w.r += (targetR - state.w.r) * ease;
+    state.w.s += (targetS - state.w.s) * ease;
+
+    if (!state.manualMode && state.returnBlend < 1) {
+      state.returnBlend = Math.min(1, state.returnBlend + real * 2.4);
+      if (state.returnBlend >= 1) state.returnFrom = null;
+    }
+
+    if (state.reveal < 1) state.reveal = Math.min(1, state.reveal + real * 3.1);
+    if (state.flash > 0) state.flash = Math.max(0, state.flash - real * 1.15);
+
+    state.paramClock += real;
+    if (!state.manualMode && state.paramClock > .1) {
+      state.paramClock = 0;
+      updateParamValues();
+    }
+
+    const viewEase = 1 - Math.exp(-real * 9);
+    view.yaw += (view.targetYaw - view.yaw) * viewEase;
+    view.pitch += (view.targetPitch - view.pitch) * viewEase;
+    view.zoom += (view.targetZoom - view.zoom) * viewEase;
+  }
+
+  function frame(now) {
+    const dt = Math.min(.06, (now - last) / 1000);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------------- interaction ---------------- */
+  const drag = { active: false, id: null, x: 0, y: 0, moved: 0 };
+
+  canvas.addEventListener('pointerdown', e => {
+    if (e.button !== undefined && e.button !== 0) return;
+    drag.active = true;
+    drag.id = e.pointerId;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    drag.moved = 0;
+    stageCard.classList.add('is-dragging');
+    canvas.setPointerCapture?.(e.pointerId);
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!drag.active || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    drag.moved += Math.abs(dx) + Math.abs(dy);
+    view.targetYaw += dx * .0074;
+    view.targetPitch = clamp(view.targetPitch + dy * .0062, -.95, .98);
+    if (drag.moved > 26) sceneHint.classList.add('is-gone');
+  });
+
+  function endDrag(e) {
+    if (!drag.active) return;
+    drag.active = false;
+    drag.id = null;
+    stageCard.classList.remove('is-dragging');
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('lostpointercapture', () => {
+    drag.active = false;
+    stageCard.classList.remove('is-dragging');
+  });
+
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    view.targetZoom = clamp(view.targetZoom * Math.exp(-e.deltaY * .00115), .68, 1.85);
+  }, { passive: false });
+
+  canvas.addEventListener('dblclick', resetView);
+  canvas.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') { view.targetYaw -= .18; e.preventDefault(); }
+    if (e.key === 'ArrowRight') { view.targetYaw += .18; e.preventDefault(); }
+    if (e.key === 'ArrowUp') { view.targetPitch = clamp(view.targetPitch - .12, -.95, .98); e.preventDefault(); }
+    if (e.key === 'ArrowDown') { view.targetPitch = clamp(view.targetPitch + .12, -.95, .98); e.preventDefault(); }
+  });
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+    if (typing) return;
+    if (e.code === 'Space' && !e.target.closest('button')) {
+      e.preventDefault();
+      togglePlay();
+      return;
+    }
+    if (e.key >= '1' && e.key <= '4') {
+      const id = ORDER[Number(e.key) - 1];
+      if (id) selectMolecule(id);
+      return;
+    }
+    const k = e.key.toLowerCase();
+    if (k === 'r') resetView();
+    if (k === 'g') toggleGuides();
+  });
+
+  /* ---------------- boot ---------------- */
+  buildMoleculeOptions();
+  buildTable();
+
+  const params = new URLSearchParams(location.search);
+  const initial = params.get('m');
+  const initialTime = parseFloat(params.get('t'));
+  if (Number.isFinite(initialTime) && initialTime >= 0) {
+    state.time = initialTime;
+    state.trailClock = initialTime;
+  }
+  const shouldPause = params.get('pause') === '1';
+  if (shouldPause) state.playing = false;
+
+  selectMolecule(MOLECULES[initial] ? initial : 'mono', { initial: true });
+  if (params.get('guides') === '0') state.showGuides = false;
+  if (Number.isFinite(initialTime) && initialTime > 0) {
+    const mm = MOLECULES[state.moleculeId];
+    state.rot.x += initialTime * state.speed * (mm.rotSpeed[0] || 0);
+    state.rot.y += initialTime * state.speed * (mm.rotSpeed[1] || 0);
+    state.rot.z += initialTime * state.speed * (mm.rotSpeed[2] || 0);
+  }
+  setSpeed(1);
+  setModelSize(1);
+  updateUI(false);
+  updateParamValues();
+  stageCard.classList.toggle('is-paused', !state.playing);
+  playBtn.setAttribute('aria-label', state.manualMode ? '返回自动演示' : (state.playing ? '暂停动画' : '播放动画'));
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
